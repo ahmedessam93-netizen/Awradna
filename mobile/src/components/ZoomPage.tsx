@@ -1,14 +1,14 @@
 // One book page: fits the screen, pinch or double-tap to zoom, drag when zoomed.
 // While zoomed, page swiping is paused so the drag moves the page instead.
 import { Image } from 'expo-image';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
-type Props = { source: number; aspect: number; width: number; height: number; onZoomChange: (zoomed: boolean) => void; onTap: () => void; label: string };
+type Props = { source: number; aspect: number; width: number; height: number; onZoomChange: (zoomed: boolean) => void; onTap: () => void; label: string; tint: string; initialScale?: number };
 
-export function ZoomPage({ source, aspect, width, height, onZoomChange, onTap, label }: Props) {
+export function ZoomPage({ source, aspect, width, height, onZoomChange, onTap, label, tint, initialScale = 1 }: Props) {
   // fit inside the area, keeping the page's proportions
   const fitW = Math.min(width, height * aspect);
   const fitH = fitW / aspect;
@@ -47,6 +47,14 @@ export function ZoomPage({ source, aspect, width, height, onZoomChange, onTap, l
     });
   const singleTap = Gesture.Tap().maxDuration(220).requireExternalGestureToFail(doubleTap).onEnd(() => { runOnJS(onTap)(); });
 
+  // a larger page size opens the page already enlarged, at its top
+  useEffect(() => {
+    const s0 = Math.max(1, initialScale);
+    scale.value = withTiming(s0, { duration: 180 }); savedScale.value = s0;
+    const { my } = limits(s0); tx.value = 0; ty.value = withTiming(my, { duration: 180 });
+    zoomed.value = s0 > 1.05; onZoomChange(s0 > 1.05);
+  }, [initialScale]);
+
   const gesture = Gesture.Simultaneous(pinch, pan, Gesture.Exclusive(doubleTap, singleTap));
   const st = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }, { translateY: ty.value }, { scale: scale.value }] }));
 
@@ -54,7 +62,7 @@ export function ZoomPage({ source, aspect, width, height, onZoomChange, onTap, l
     <GestureDetector gesture={gesture}>
       <View style={{ width, height, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }} accessible accessibilityLabel={label}>
         <Animated.View style={[{ width: fitW, height: fitH }, st]}>
-          <Image source={source} style={{ width: fitW, height: fitH }} contentFit="contain" transition={120} cachePolicy="memory-disk" />
+          <Image source={source} style={{ width: fitW, height: fitH }} contentFit="contain" tintColor={tint} transition={120} cachePolicy="memory-disk" />
         </Animated.View>
       </View>
     </GestureDetector>

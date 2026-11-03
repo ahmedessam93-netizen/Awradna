@@ -3,58 +3,47 @@ import React, { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Polygon, Rect } from 'react-native-svg';
-import { BeadRing } from '../../components/BeadRing';
-import { BookIcon, PinIcon } from '../../components/icons';
+import { Misbaha } from '../../components/BeadRing';
+import { BookIcon, ChevronIcon, MisbahaIcon, PinIcon } from '../../components/icons';
 import { Orb, PrayerPath } from '../../components/PrayerPath';
-import { GlassButton, GoldButton, Glass, Txt, useTap } from '../../components/ui';
+import { GlassButton, GoldButton, Mark, Panel, Txt, useTap } from '../../components/ui';
 import { DAYS } from '../../core/data';
 import { ar, fmtTime, mins, MN, PG, sum } from '../../core/plan';
 import { usePlan, useStore } from '../../core/store';
 import { F, usePalette } from '../../theme';
 
+const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 function hijri(d: Date) {
-  try { return new Intl.DateTimeFormat('ar-EG-u-ca-islamic-umalqura-nu-arab', { day: 'numeric', month: 'long', year: 'numeric' }).format(d); } catch { return ''; }
+  try { return new Intl.DateTimeFormat('ar-EG-u-ca-islamic-umalqura-nu-arab', { day: 'numeric', month: 'long', year: 'numeric' }).format(d).replace(/\s?هـ$/, ''); } catch { return ''; }
 }
-function greg(d: Date) {
-  const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-  return `${ar(d.getDate())} ${months[d.getMonth()]}`;
-}
-
-function StarBullet({ v, size = 22 }: { v: number; size?: number }) {
-  const p = usePalette();
-  const full = v >= 100;
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
-      <Rect x={5.5} y={5.5} width={13} height={13} rx={1} fill={full ? p.gold : 'none'} stroke={p.gold} strokeOpacity={full ? 1 : 0.55} strokeWidth={1.3} />
-      <Rect x={5.5} y={5.5} width={13} height={13} rx={1} fill={full ? p.gold : 'none'} stroke={p.gold} strokeOpacity={full ? 1 : 0.55} strokeWidth={1.3} transform="rotate(45 12 12)" />
-      {!full && v > 0 ? <Circle cx={12} cy={12} r={2 + 3 * (v / 100)} fill={p.gold} fillOpacity={0.85} /> : null}
-      {full ? <Polygon points="12,8.6 13,11 15.4,12 13,13 12,15.4 11,13 8.6,12 11,11" fill={p.onGold} /> : null}
-    </Svg>
-  );
-}
+const pn = (id: string) => ar(id.replace(/[ab]$/, ''));
 
 export default function Today() {
   const p = usePalette(); const P = usePlan(); const { state, now } = useStore(); const tap = useTap();
   const insets = useSafeAreaInsets(); const { width } = useWindowDimensions();
-  const W = Math.min(width, 520) - 32;
-  const ring = Math.min(W - 24, 300);
+  const W = Math.min(width, 520) - 48;
+  const ring = Math.min(W, 342);
 
   const portionW = sum(P.portion);
   const w = P.wins[P.nextIdx];
   const isLast = P.nextIdx === P.wins.length - 1;
   const first = P.portion[0], last = P.portion[P.portion.length - 1];
-  const pn = (id: string) => ar(id.replace(/[ab]$/, ''));
   const range = !first ? '' : first === last ? `ص ${pn(first.id)}` : `من ص ${pn(first.id)} إلى ص ${pn(last.id)}`;
   const startAt = P.remaining.length ? P.pages.indexOf(P.remaining[0]) : 0;
   const open = (start: number, review = false) => { tap('medium'); router.push({ pathname: '/reader', params: { start: String(start), review: review ? '1' : '0' } }); };
 
-  let eyebrow = '', title = '', extra = '', cta = '', ctaSecondary = false;
-  if (!P.pages.length) { eyebrow = 'لا شيء مختار'; title = 'اختر أجزاء الورد'; extra = 'كل الأجزاء مُعطّلة في الإعدادات.'; }
-  else if (P.complete) { eyebrow = 'اكتمل الورد'; title = `تمّ ورد يوم ${P.dayName}`; extra = 'تقبّل الله. ورد الغد يبدأ بعد الفجر.'; }
-  else if (P.curDone && P.nextIdx > P.cur) { eyebrow = `أتممت جلسة ${P.wins[P.cur].name}`; title = `القادمة: جلسة ${w.name}`; extra = `بعد صلاة ${w.name}، ${fmtTime(w.time)}`; cta = 'اقرأ الآن على أي حال'; ctaSecondary = true; }
-  else if (P.curDone && isLast) { eyebrow = `أتممت جلسة ${w.name}`; title = 'ما بقي من ورد اليوم'; extra = 'اقرأه متى تيسّر قبل النوم.'; cta = 'تابع القراءة'; }
-  else { eyebrow = `الجلسة الحالية، بعد صلاة ${w.name} ${fmtTime(w.time)}`; title = isLast ? `جلسة ${w.name}، آخر جلسة اليوم` : `جلسة ${w.name}`; cta = P.readW > 0 ? 'تابع القراءة' : 'ابدأ القراءة'; }
+  // what the hero says
+  let eyebrow = '', title = '', line = '', cta = '', secondary = false, eyeTone: 'now' | 'done' | 'plain' = 'now';
+  if (!P.pages.length) { eyebrow = 'لا شيء مختار'; title = 'اختر أجزاء الورد'; line = 'كل الأجزاء مُعطّلة في الإعدادات.'; eyeTone = 'plain'; }
+  else if (P.complete) { eyebrow = 'اكتمل الورد'; title = `تمّ ورد ${P.dayName}`; line = 'تقبّل الله. ورد الغد يبدأ بعد الفجر.'; eyeTone = 'done'; }
+  else if (P.curDone && P.nextIdx > P.cur) { eyebrow = `أتممت جلسة ${P.wins[P.cur].name}`; title = `القادمة: جلسة ${w.name}`; line = `بعد صلاة ${w.name}، ${fmtTime(w.time)}`; cta = 'اقرأ الآن على أي حال'; secondary = true; eyeTone = 'done'; }
+  else if (P.curDone && isLast) { eyebrow = `أتممت جلسة ${w.name}`; title = 'ما بقي من ورد اليوم'; line = `${PG(P.left)}، اقرأها متى تيسّر قبل النوم.`; cta = 'تابع القراءة'; eyeTone = 'done'; }
+  else {
+    eyebrow = `الآن، بعد صلاة ${w.name}`;
+    title = isLast ? `جلسة ${w.name}، الأخيرة` : `جلسة ${w.name}`;
+    line = `${PG(portionW)}، نحو ${MN(mins(portionW))}، ${range}`;
+    cta = `ابدأ جلسة ${w.name}`;
+  }
 
   const orbs: Orb[] = P.wins.map((x, k) => {
     const done = P.complete || !!(state.days[P.key]?.done || {})[x.i];
@@ -67,104 +56,112 @@ export default function Today() {
     return DAYS[P.wd].items.map((it, idx) => {
       const [part, ttl, a, b] = it; if (!state.settings.parts[part]) return null;
       const pgs = P.pages.filter((x) => x.item === idx); const read = pgs.filter((x) => ds[x.id]);
-      const v = pgs.length ? Math.round((read.length / pgs.length) * 100) : 0;
-      const rng = typeof a === 'string' ? `ص ${pn(String(a))}` : a === b ? `ص ${ar(a)}` : `ص ${ar(a)}–${ar(b)}`;
-      return { idx, ttl, rng, n: sum(pgs), v, firstUnread: P.pages.findIndex((x) => x.item === idx && !ds[x.id]), firstAny: P.pages.findIndex((x) => x.item === idx) };
-    }).filter(Boolean) as { idx: number; ttl: string; rng: string; n: number; v: number; firstUnread: number; firstAny: number }[];
+      const rng = typeof a === 'string' ? `ص ${pn(String(a))}` : a === b ? `ص ${ar(a)}` : `ص ${ar(a)}–${ar(b as number)}`;
+      const n = Math.max(1, Math.round(sum(pgs)));
+      const sub = part === 'salawat' ? `من صلوات جليلة، ${rng}` : part === 'quran' ? `ورد القرآن، ${rng}` : `${rng}، ${PG(n)}`;
+      const inNow = !P.complete && P.portion.some((x) => x.item === idx);
+      const st = read.length === pgs.length && pgs.length ? 'done' : read.length ? 'some' : inNow ? 'now' : 'none';
+      return { idx, ttl, sub, st, label: st === 'done' ? 'تمّ' : st === 'some' ? `${ar(read.length)} من ${ar(pgs.length)}` : st === 'now' ? 'الآن' : 'لم يبدأ',
+        firstUnread: P.pages.findIndex((x) => x.item === idx && !ds[x.id]), firstAny: P.pages.findIndex((x) => x.item === idx) };
+    }).filter(Boolean) as { idx: number; ttl: string; sub: string; st: string; label: string; firstUnread: number; firstAny: number }[];
   }, [P, state]);
 
   const city = state.settings.cityName || '';
+  const g = P.date;
+  const dateLine = [hijri(g), `${ar(g.getDate())} ${MONTHS[g.getMonth()]}`].filter(Boolean).join('، ');
+
   return (
-    <ScrollView contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: insets.bottom + 120, paddingHorizontal: 16, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={{ paddingTop: insets.top + 14, paddingBottom: insets.bottom + 130, paddingHorizontal: 24, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
       <View style={{ width: W }}>
         {/* header */}
-        <Animated.View entering={FadeInDown.duration(500)} style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <Animated.View entering={FadeInDown.duration(500)} style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <View style={{ flex: 1 }}>
-            <Txt v="label" style={{ color: p.muted }}>{[hijri(P.date), greg(P.date)].filter(Boolean).join('، ')}</Txt>
-            <Txt v="display" style={{ marginTop: -6 }}>{`ورد ${P.dayName}`}</Txt>
+            <Txt v="label">{dateLine}</Txt>
+            <Txt v="display">{`ورد ${P.dayName}`}</Txt>
           </View>
           {city ? (
-            <Pressable onPress={() => { tap(); router.push('/city'); }} accessibilityRole="button" accessibilityLabel={`المدينة ${city}`}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: p.dark ? 'rgba(240,214,150,0.22)' : 'rgba(150,110,40,0.22)', backgroundColor: p.dark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.6)' }}>
+            <Pressable onPress={() => { tap(); router.push('/city'); }} accessibilityRole="button" accessibilityLabel={`المدينة: ${city}`}
+              style={{ marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 6, height: 34, paddingHorizontal: 12, borderRadius: 17, borderWidth: 1, borderColor: p.chipBorder, backgroundColor: p.chip }}>
               <PinIcon size={14} color={p.gold} />
-              <Text maxFontSizeMultiplier={1.15} style={{ fontFamily: F.uiMed, fontSize: 12, color: p.muted }}>{city}</Text>
+              <Text maxFontSizeMultiplier={1.15} numberOfLines={1} style={{ fontFamily: F.ui, fontSize: 13, color: p.muted, maxWidth: 120 }}>{city}</Text>
             </Pressable>
           ) : null}
         </Animated.View>
 
-        {/* hero: misbaha + current sitting */}
-        <Animated.View entering={FadeInDown.delay(80).duration(600)}>
-          <Glass style={{ marginTop: 10 }} padding={20}>
-            <View style={{ alignItems: 'center' }}>
-              <BeadRing size={ring} readFrac={P.total ? P.readW / P.total : 0} nowFrac={P.total && !P.complete ? portionW / P.total : 0} complete={P.complete}>
-                {P.complete ? (
-                  <>
-                    <Txt v="display" align="center" style={{ fontSize: 34, lineHeight: 52 }}>تمّ</Txt>
-                    <Txt v="meta" align="center">{`${PG(P.total)} اليوم`}</Txt>
-                  </>
-                ) : (
-                  <>
-                    <Txt v="num" align="center" style={{ fontSize: 46, lineHeight: 58, color: p.ink }}>{ar(Math.round(P.readW))}</Txt>
-                    <Txt v="meta" align="center" style={{ marginTop: -4 }}>{`من ${ar(Math.round(P.total))} صفحة`}</Txt>
-                    {P.left > 0 ? <Txt v="label" align="center" style={{ color: p.gold, marginTop: 2 }}>{`بقي نحو ${MN(mins(P.left))}`}</Txt> : null}
-                  </>
-                )}
-              </BeadRing>
-            </View>
-            <View style={{ marginTop: 6 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: P.complete || P.curDone ? p.gold : p.emerald }} />
-                <Txt v="label" style={{ flex: 1 }}>{eyebrow}</Txt>
-              </View>
-              <Txt v="title" style={{ marginTop: 2 }}>{title}</Txt>
-              {!P.complete && P.portion.length > 0 && !(P.curDone && P.nextIdx > P.cur) ? <Txt v="meta">{`${PG(portionW)}، نحو ${MN(mins(portionW))}، ${range}`}</Txt> : null}
-              {extra ? <Txt v="meta">{extra}</Txt> : null}
-            </View>
-            <View style={{ marginTop: 16, gap: 10 }}>
-              {!P.pages.length ? <GoldButton label="الإعدادات" onPress={() => router.navigate('/settings')} /> : null}
-              {cta && !ctaSecondary ? <GoldButton label={cta} icon={<BookIcon size={20} color={p.onGold} />} onPress={() => open(startAt)} /> : null}
-              {cta && ctaSecondary ? <GlassButton label={cta} tone="gold" onPress={() => open(startAt)} /> : null}
-              {P.complete ? <GlassButton label="مراجعة ما قرأت" tone="gold" onPress={() => open(0, true)} /> : null}
-            </View>
-          </Glass>
+        {/* the misbaha */}
+        <Animated.View entering={FadeInDown.delay(60).duration(600)} style={{ alignItems: 'center', marginTop: 14 }}>
+          <Misbaha size={ring} readFrac={P.total ? P.readW / P.total : 0} nowFrac={P.total && !P.complete ? portionW / P.total : 0} complete={P.complete}
+            label={`تقدم ورد اليوم: ${ar(Math.round(P.readW))} من ${ar(Math.round(P.total))} صفحة`}>
+            {P.complete ? (
+              <>
+                <Txt v="display" align="center" style={{ fontSize: 44, lineHeight: 60 }}>تمّ</Txt>
+                <Txt v="meta" align="center">{`${PG(Math.round(P.total))} اليوم`}</Txt>
+              </>
+            ) : (
+              <>
+                <Txt v="num" align="center" style={{ fontSize: ring * 0.21, lineHeight: ring * 0.235 }}>{ar(Math.round(P.readW))}</Txt>
+                <Txt v="meta" align="center" style={{ fontSize: 15, lineHeight: 22 }}>{`من ${ar(Math.round(P.total))} صفحة`}</Txt>
+                {P.left > 0 ? <Txt v="label" align="center" color={p.gold} style={{ marginTop: 6 }}>{`بقي نحو ${MN(mins(P.left))}`}</Txt> : null}
+              </>
+            )}
+          </Misbaha>
         </Animated.View>
 
-        {/* the day's path */}
+        {/* the current sitting */}
+        <Animated.View entering={FadeInDown.delay(120).duration(600)} style={{ alignItems: 'center', marginTop: 6 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: eyeTone === 'now' ? p.turq : eyeTone === 'done' ? p.gold : p.faint}} />
+            <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: F.ui, fontSize: 14, lineHeight: 20, color: eyeTone === 'now' ? p.turqHi : eyeTone === 'done' ? p.gold : p.muted }}>{eyebrow}</Text>
+          </View>
+          <Txt v="h1" align="center" style={{ marginTop: 4 }}>{title}</Txt>
+          {line ? <Txt v="meta" align="center" style={{ fontSize: 15, lineHeight: 24 }}>{line}</Txt> : null}
+          <View style={{ alignSelf: 'stretch', marginTop: 16, gap: 10 }}>
+            {!P.pages.length ? <GoldButton label="الإعدادات" onPress={() => router.navigate('/settings')} /> : null}
+            {cta && !secondary ? <GoldButton label={cta} icon={<BookIcon size={22} color={p.onPrimary} />} onPress={() => open(startAt)} /> : null}
+            {cta && secondary ? <GlassButton label={cta} tone="gold" onPress={() => open(startAt)} /> : null}
+            {P.complete ? <GlassButton label="مراجعة ما قرأت" tone="gold" onPress={() => open(0, true)} /> : null}
+          </View>
+        </Animated.View>
+
+        {/* the day's horizon */}
         {P.pages.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(160).duration(600)}>
-            <Glass style={{ marginTop: 14 }} padding={16}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <Txt v="h2">جلسات اليوم</Txt>
-                <Txt v="label">{`${ar(P.wins.length)} جلسات بعد الصلوات`}</Txt>
-              </View>
-              <View style={{ marginTop: 10 }}>
-                <PrayerPath orbs={orbs} width={W - 34} />
-              </View>
-            </Glass>
+          <Animated.View entering={FadeInDown.delay(180).duration(600)} style={{ marginTop: 32 }}>
+            <PrayerPath orbs={orbs} width={W} />
           </Animated.View>
         )}
 
-        {/* parts */}
+        {/* the parts of today's wird, marked with the book's rosette */}
         {parts.length > 0 && (
           <Animated.View entering={FadeInDown.delay(240).duration(600)}>
-            <Glass style={{ marginTop: 14 }} padding={6}>
-              <Txt v="h2" style={{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 4 }}>أجزاء ورد اليوم</Txt>
+            <Panel style={{ marginTop: 20 }}>
+              <Txt v="h2" style={{ marginTop: 10, marginBottom: 2 }}>أجزاء ورد اليوم</Txt>
               {parts.map((x, k) => (
-                <Pressable key={x.idx} accessibilityRole="button" accessibilityLabel={`${x.ttl}، ${x.v} بالمئة`} onPress={() => open(x.firstUnread >= 0 ? x.firstUnread : x.firstAny, x.firstUnread < 0)}
-                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 12, borderRadius: 18, backgroundColor: pressed ? (p.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)') : 'transparent', borderTopWidth: k === 0 ? 0 : 0.5, borderTopColor: p.dark ? 'rgba(240,214,150,0.12)' : 'rgba(30,42,35,0.08)' })}>
-                  <StarBullet v={x.v} />
+                <Pressable key={x.idx} accessibilityRole="button" accessibilityLabel={`${x.ttl}، ${x.label}`} onPress={() => open(x.firstUnread >= 0 ? x.firstUnread : x.firstAny, x.firstUnread < 0)}
+                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, opacity: pressed ? 0.7 : 1, borderTopWidth: k === 0 ? 0 : 1, borderTopColor: p.rule })}>
+                  <Mark color={x.st === 'done' ? p.gold : x.st === 'some' || x.st === 'now' ? p.turq : p.goldFaint} />
                   <View style={{ flex: 1, minWidth: 0 }}>
-                    <Txt v="body" style={{ fontFamily: F.uiMed, fontSize: 15 }} numberOfLines={2}>{x.ttl}</Txt>
-                    <Txt v="meta" style={{ fontSize: 12.5 }}>{`${x.rng}، ${PG(x.n)}`}</Txt>
-                    <View style={{ height: 3, borderRadius: 2, backgroundColor: p.dark ? 'rgba(255,255,255,0.08)' : 'rgba(30,42,35,0.08)', marginTop: 6, overflow: 'hidden' }}>
-                      <View style={{ width: `${x.v}%`, height: 3, backgroundColor: x.v === 100 ? p.gold : p.emerald }} />
-                    </View>
+                    <Txt v="body" style={{ fontFamily: F.uiMed, lineHeight: 24 }} numberOfLines={2}>{x.ttl}</Txt>
+                    <Txt v="label" style={{ lineHeight: 19 }}>{x.sub}</Txt>
                   </View>
+                  <Text maxFontSizeMultiplier={1.2} style={{ fontFamily: F.ui, fontSize: 13, color: x.st === 'done' ? p.gold : x.st === 'some' || x.st === 'now' ? p.turqHi : p.faint }}>{x.label}</Text>
                 </Pressable>
               ))}
-            </Glass>
+            </Panel>
           </Animated.View>
         )}
+
+        {/* the daily wird: separate from the weekly wird, only for those who open it */}
+        <Animated.View entering={FadeInDown.delay(300).duration(600)}>
+          <Pressable onPress={() => { tap(); router.push('/daily'); }} accessibilityRole="button" accessibilityLabel="الورد اليومي"
+            style={({ pressed }) => ({ marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, paddingHorizontal: 18, borderRadius: 20, borderWidth: 1, borderStyle: 'dashed', borderColor: p.goldFaint, backgroundColor: pressed ? p.chip : p.dark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.35)' })}>
+            <MisbahaIcon size={26} />
+            <View style={{ flex: 1 }}>
+              <Txt v="body" style={{ fontFamily: F.uiMed, fontSize: 15.5, lineHeight: 23 }}>الورد اليومي</Txt>
+              <Txt v="label" style={{ fontSize: 12.5, lineHeight: 18 }}>الأساس، والمسبّعات، والوظيفة، وحزب البحر، مع المسبحة</Txt>
+            </View>
+            <ChevronIcon size={18} color={p.faint} />
+          </Pressable>
+        </Animated.View>
       </View>
     </ScrollView>
   );

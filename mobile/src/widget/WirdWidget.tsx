@@ -1,4 +1,4 @@
-// Android home-screen widgets, in the app's night-glass style.
+// Android home-screen widgets, in the app's lapis night style.
 //  small  (2×2): the misbaha ring + current sitting
 //  medium (4×2): a short line from today's wird (changes every 15 min) + ring + sitting
 //  large  (4×4): «مشكاة اللحظة» — any line from today's wird, in large Amiri, + sitting and next prayer
@@ -7,17 +7,18 @@ import { FlexWidget, SvgWidget, TextWidget } from 'react-native-android-widget';
 import { beadsSvg } from '../core/beads';
 import { Snapshot } from '../core/plan';
 
-const F = { title: 'Amiri_700Bold', ui: 'IBMPlexSansArabic_500Medium', uiReg: 'IBMPlexSansArabic_400Regular' };
+const F = { title: 'Amiri_700Bold', kufi: 'ReemKufi_600SemiBold', ui: 'IBMPlexSansArabic_500Medium', uiReg: 'IBMPlexSansArabic_400Regular' };
+// lapis night, lamp gold, turquoise for "now" (same tokens as the app)
 const C = {
-  bgFrom: 'rgba(9, 30, 24, 0.95)' as const,
-  bgTo: 'rgba(16, 20, 46, 0.95)' as const,
-  rim: 'rgba(227, 196, 122, 0.38)' as const,
-  line: 'rgba(227, 196, 122, 0.22)' as const,
-  ivory: '#F4EBD6' as const,
-  muted: 'rgba(244, 235, 214, 0.66)' as const,
-  faint: 'rgba(244, 235, 214, 0.45)' as const,
-  gold: '#E8C77C' as const,
-  emerald: '#7BE0AE' as const,
+  bgFrom: 'rgba(19, 35, 80, 0.97)' as const,
+  bgTo: 'rgba(7, 12, 26, 0.97)' as const,
+  rim: 'rgba(226, 188, 106, 0.32)' as const,
+  line: 'rgba(226, 188, 106, 0.2)' as const,
+  ivory: '#F3EAD7' as const,
+  muted: 'rgba(243, 234, 215, 0.66)' as const,
+  faint: 'rgba(243, 234, 215, 0.45)' as const,
+  gold: '#E9C677' as const,
+  turq: '#7FE3D7' as const,
 };
 
 const ring = (s: Snapshot, size: number) => beadsSvg(size, s.progress, s.complete ? 0 : s.nowFrac, { complete: s.complete });
@@ -25,7 +26,7 @@ const ring = (s: Snapshot, size: number) => beadsSvg(size, s.progress, s.complet
 export function WirdWidget({ s, size = 'medium' }: { s: Snapshot; size?: 'small' | 'medium' | 'large' }) {
   const shell = {
     height: 'match_parent' as const, width: 'match_parent' as const,
-    backgroundGradient: { from: C.bgFrom, to: C.bgTo, orientation: 'TL_BR' as const },
+    backgroundGradient: { from: C.bgFrom, to: C.bgTo, orientation: 'TOP_BOTTOM' as const },
     borderRadius: 28, borderWidth: 1, borderColor: C.rim,
   };
   const sitting = s.complete ? 'تمّ ورد اليوم، تقبّل الله' : `${s.shortTitle}، ${s.detail}`;
@@ -34,7 +35,7 @@ export function WirdWidget({ s, size = 'medium' }: { s: Snapshot; size?: 'small'
     return (
       <FlexWidget clickAction="OPEN_APP" style={{ ...shell, padding: 10, flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <SvgWidget svg={ring(s, 96)} style={{ width: 96, height: 96 }} />
-        <TextWidget text={s.complete ? 'تمّ ورد اليوم' : s.shortTitle} style={{ fontFamily: F.title, fontSize: 15, color: s.complete ? C.gold : C.ivory, textAlign: 'center', marginTop: 4 }} />
+        <TextWidget text={s.complete ? 'تمّ ورد اليوم' : s.shortTitle} style={{ fontFamily: F.kufi, fontSize: 15, color: s.complete ? C.gold : C.ivory, textAlign: 'center', marginTop: 4 }} />
         <TextWidget text={s.complete ? 'تقبّل الله' : s.detail} style={{ fontFamily: F.uiReg, fontSize: 11, color: C.muted, textAlign: 'center' }} />
       </FlexWidget>
     );
@@ -46,7 +47,7 @@ export function WirdWidget({ s, size = 'medium' }: { s: Snapshot; size?: 'small'
         <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', width: 'match_parent' }}>
           <FlexWidget style={{ flex: 1, flexDirection: 'column', alignItems: 'flex-end' }}>
             <TextWidget text={s.day} style={{ fontFamily: F.ui, fontSize: 12, color: C.gold, textAlign: 'right' }} />
-            <TextWidget text="مشكاة اللحظة" style={{ fontFamily: F.title, fontSize: 18, color: C.ivory, textAlign: 'right' }} />
+            <TextWidget text="مشكاة اللحظة" style={{ fontFamily: F.kufi, fontSize: 18, color: C.ivory, textAlign: 'right' }} />
           </FlexWidget>
           <SvgWidget svg={ring(s, 58)} style={{ width: 58, height: 58 }} />
         </FlexWidget>
@@ -57,7 +58,7 @@ export function WirdWidget({ s, size = 'medium' }: { s: Snapshot; size?: 'small'
         </FlexWidget>
         <FlexWidget style={{ height: 1, width: 'match_parent', backgroundColor: C.line, marginTop: 10, marginBottom: 10 }} />
         <FlexWidget style={{ flexDirection: 'row', width: 'match_parent', alignItems: 'center' }}>
-          <TextWidget text={s.complete || !s.next ? '' : `التالية: ${s.next}`} style={{ fontFamily: F.uiReg, fontSize: 11, color: C.emerald, textAlign: 'left' }} />
+          <TextWidget text={s.complete || !s.next ? '' : `التالية: ${s.next}`} style={{ fontFamily: F.uiReg, fontSize: 11, color: C.turq, textAlign: 'left' }} />
           <FlexWidget style={{ flex: 1 }} />
           <TextWidget text={sitting} style={{ fontFamily: F.ui, fontSize: 12, color: C.muted, textAlign: 'right' }} />
         </FlexWidget>

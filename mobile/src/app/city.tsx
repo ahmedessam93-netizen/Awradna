@@ -23,14 +23,14 @@ export default function CityPicker() {
   const pick = (i: number) => { tap('medium'); const c = CITIES[i]; setSettings({ city: i, cityName: c[0], lat: c[1], lng: c[2], method: c[3] }); router.back(); };
   const auto = async () => {
     setBusy(true);
-    try { const r = await locateMe(); if (r) { setSettings({ lat: r.lat, lng: r.lng, method: r.method, city: 'geo', cityName: r.cityName }); router.back(); } }
+    try { const r = await locateMe(); if (r) { setSettings({ lat: r.lat, lng: r.lng, method: r.method, city: 'geo', cityName: r.cityName, travel: true }); router.back(); } }
     catch {} finally { setBusy(false); }
   };
   return (
     <View style={{ flex: 1, paddingTop: 18, paddingHorizontal: 16 }}>
       <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: p.faint, marginBottom: 14 }} />
-      <Txt v="title">اختر مدينتك</Txt>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, paddingHorizontal: 12, height: 46, borderRadius: 14, backgroundColor: p.dark ? 'rgba(255,255,255,0.07)' : 'rgba(30,42,35,0.06)', borderWidth: 1, borderColor: p.dark ? 'rgba(240,214,150,0.2)' : 'rgba(150,110,40,0.2)' }}>
+      <Txt v="display" style={{ fontSize: 30, lineHeight: 42 }}>اختر مدينتك</Txt>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, paddingHorizontal: 12, height: 46, borderRadius: 14, backgroundColor: p.chip, borderWidth: 1, borderColor: p.chipBorder }}>
         <SearchIcon size={18} color={p.muted} />
         <TextInput value={q} onChangeText={setQ} placeholder="ابحث عن مدينة" placeholderTextColor={p.faint} style={{ flex: 1, fontFamily: F.ui, fontSize: 16, color: p.ink, textAlign: 'right', writingDirection: 'rtl' }} autoCorrect={false} returnKeyType="search" />
       </View>
@@ -45,8 +45,8 @@ export default function CityPicker() {
           return (
             <View>
               {showHeader && !q ? <Txt v="label" style={{ marginTop: 12, marginBottom: 4, paddingHorizontal: 6 }}>{item.c[3] === 'egypt' ? 'مصر' : 'مدن أخرى'}</Txt> : null}
-              <Pressable onPress={() => pick(item.i)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', paddingVertical: 13, paddingHorizontal: 8, borderRadius: 12, backgroundColor: on ? (p.dark ? 'rgba(232,199,124,0.12)' : 'rgba(169,121,42,0.08)') : pressed ? (p.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)') : 'transparent' })}>
-                <Txt v="body" style={{ flex: 1, color: on ? p.gold : p.ink, fontFamily: on ? F.uiBold : F.ui }}>{item.c[0]}</Txt>
+              <Pressable onPress={() => pick(item.i)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', paddingVertical: 13, paddingHorizontal: 8, borderRadius: 12, backgroundColor: on ? p.turqSoft : pressed ? p.chip : 'transparent' })}>
+                <Txt v="body" style={{ flex: 1, color: on ? p.goldLight : p.ink, fontFamily: on ? F.uiBold : F.ui }}>{item.c[0]}</Txt>
                 {on ? <CheckIcon size={18} color={p.gold} /> : null}
               </Pressable>
             </View>

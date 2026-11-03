@@ -6,8 +6,11 @@ export const PARTS: Record<string, { title: string; on: boolean }> = {
   kunuz:   { title: 'كنوز الأسرار',   on: true },
   salawat: { title: 'صلوات جليلة',    on: true },
   ahzab:   { title: 'الأحزاب',        on: false },
+  quran:   { title: 'ورد القرآن الكريم', on: false },
 };
-export const PART_ORDER = ['dalail', 'mughnam', 'kunuz', 'salawat', 'ahzab'];
+export const PART_ORDER = ['dalail', 'mughnam', 'kunuz', 'salawat', 'ahzab', 'quran'];
+// the day's surah, printed in the book right after كنوز الأسرار
+export const SURAH: Record<number, string> = { 1: 'يس', 2: 'طه', 3: 'مريم', 4: 'الكهف', 5: 'الدخان', 6: 'النور', 0: 'الرحمن' };
 
 export type Item = [string, string, number | string, number | string];
 export const DAYS: Record<number, { key: string; name: string; items: Item[] }> = {
@@ -17,6 +20,7 @@ export const DAYS: Record<number, { key: string; name: string; items: Item[] }> 
     ['mughnam', 'حزب يوم الإثنين من خلاصة المغنم', 48, 50],
     ['ahzab',   'حزب النصر واعتصامه', 51, 54],
     ['kunuz',   'ورد كنوز الأسرار وصلاة الفاتح', 55, 61],
+    ['quran',   'سورة يس', 62, 65],
     ['salawat', 'الصلاة الإبراهيمية والصلاة التفريجية (النارية)', '273a', '273a'],
   ]},
   2: { key: 'tue', name: 'الثلاثاء', items: [
@@ -24,6 +28,7 @@ export const DAYS: Record<number, { key: string; name: string; items: Item[] }> 
     ['mughnam', 'حزب يوم الثلاثاء من خلاصة المغنم', 77, 79],
     ['ahzab',   'حزب الشكوى', 80, 89],
     ['kunuz',   'ورد كنوز الأسرار والصلاة النارية', 90, 96],
+    ['quran',   'سورة طه', 97, 103],
     ['salawat', 'صلاة الفاتح وصلاة الشفاء', '273b', '273b'],
   ]},
   3: { key: 'wed', name: 'الأربعاء', items: [
@@ -31,6 +36,7 @@ export const DAYS: Record<number, { key: string; name: string; items: Item[] }> 
     ['mughnam', 'حزب يوم الأربعاء من خلاصة المغنم', 116, 118],
     ['ahzab',   'حزب الإخفاء', 119, 120],
     ['kunuz',   'ورد كنوز الأسرار وصلاة النور', 121, 127],
+    ['quran',   'سورة مريم', 128, 132],
     ['salawat', 'الصلاة المُنجّية', 274, 274],
   ]},
   4: { key: 'thu', name: 'الخميس', items: [
@@ -38,6 +44,7 @@ export const DAYS: Record<number, { key: string; name: string; items: Item[] }> 
     ['mughnam', 'حزب يوم الخميس من خلاصة المغنم', 144, 146],
     ['ahzab',   'حزب اللطف', 147, 151],
     ['kunuz',   'ورد كنوز الأسرار وصلاة جليلة', 152, 158],
+    ['quran',   'سورة الكهف', 159, 167],
     ['salawat', 'الصلاة الممزوجة على الصلاة المشيشية (١)', 275, 279],
   ]},
   5: { key: 'fri', name: 'الجمعة', items: [
@@ -45,6 +52,7 @@ export const DAYS: Record<number, { key: string; name: string; items: Item[] }> 
     ['mughnam', 'حزب يوم الجمعة من خلاصة المغنم', 183, 186],
     ['ahzab',   'حزب الحفظ', 187, 191],
     ['kunuz',   'ورد كنوز الأسرار وصلاة جليلة', 192, 199],
+    ['quran',   'سورة الدخان', 200, 202],
     ['salawat', 'الصلاة الممزوجة على الصلاة المشيشية (٢)', 280, 284],
   ]},
   6: { key: 'sat', name: 'السبت', items: [
@@ -52,6 +60,7 @@ export const DAYS: Record<number, { key: string; name: string; items: Item[] }> 
     ['mughnam', 'حزب يوم السبت من خلاصة المغنم', 217, 219],
     ['ahzab',   'حزب النجاة', 220, 220],
     ['kunuz',   'ورد كنوز الأسرار وصلاة جليلة', 221, 227],
+    ['quran',   'سورة النور', 228, 234],
     ['salawat', 'صلوات أخرى مختارة (١)', 285, 288],
   ]},
   0: { key: 'sun', name: 'الأحد', items: [
@@ -60,6 +69,7 @@ export const DAYS: Record<number, { key: string; name: string; items: Item[] }> 
     ['mughnam', 'حزب يوم الأحد من خلاصة المغنم', 251, 255],
     ['ahzab',   'حزب الكفاية', 256, 259],
     ['kunuz',   'ورد كنوز الأسرار', 260, 266],
+    ['quran',   'سورة الرحمن', 267, 269],
     ['salawat', 'صلوات أخرى مختارة (٢)', 289, 292],
   ]},
 };

@@ -19,7 +19,7 @@ export function configureNotifications() {
       description: 'تذكير بعد كل صلاة بجلسة الورد',
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 180, 120, 180],
-      lightColor: '#E3C47A',
+      lightColor: '#E2BC6A',
       sound: 'default',
     }).catch(() => {});
   }

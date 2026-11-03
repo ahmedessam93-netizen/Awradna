@@ -7,7 +7,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#0A1F19",
+    "backgroundColor": "#0C1733",
     "ios": {
       "bundleIdentifier": "com.awradna.app",
       "supportsTablet": false,
@@ -30,7 +30,7 @@
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-foreground.png",
-        "backgroundColor": "#0A1F19",
+        "backgroundColor": "#0C1733",
         "monochromeImage": "./assets/adaptive-monochrome.png"
       },
       "permissions": [
@@ -59,10 +59,10 @@
         {
           "image": "./assets/splash-mark.png",
           "imageWidth": 140,
-          "backgroundColor": "#0A1F19",
+          "backgroundColor": "#0C1733",
           "dark": {
             "image": "./assets/splash-mark.png",
-            "backgroundColor": "#0A1F19"
+            "backgroundColor": "#0C1733"
           }
         }
       ],
@@ -70,7 +70,7 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#E3C47A"
+          "color": "#E2BC6A"
         }
       ],
       [
@@ -86,6 +86,7 @@
         {
           "fonts": [
             "./assets/fonts/Amiri_700Bold.ttf",
+            "./assets/fonts/ReemKufi_600SemiBold.ttf",
             "./assets/fonts/IBMPlexSansArabic_400Regular.ttf",
             "./assets/fonts/IBMPlexSansArabic_500Medium.ttf"
           ],

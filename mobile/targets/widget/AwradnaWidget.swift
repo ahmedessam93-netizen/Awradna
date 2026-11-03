@@ -86,21 +86,26 @@ private extension Color {
                   blue: Double(hex & 0xFF) / 255,
                   opacity: opacity)
     }
-    static let ivory = Color(hex: 0xF4EBD6)
-    static let gold = Color(hex: 0xE8C77C)
-    static let goldDeep = Color(hex: 0xA9792A)
-    static let goldLight = Color(hex: 0xFFF4CF)
-    static let emerald = Color(hex: 0x5FD39A)
-    static let emeraldDeep = Color(hex: 0x1D7A52)
-    static let night1 = Color(hex: 0x091E18)
-    static let night2 = Color(hex: 0x10142E)
+    // lapis night, lamp gold, amber beads, turquoise for "now" (same tokens as the app)
+    static let ivory = Color(hex: 0xF3EAD7)
+    static let gold = Color(hex: 0xE9C677)
+    static let goldDeep = Color(hex: 0x9C7428)
+    static let goldLight = Color(hex: 0xF7E2A6)
+    static let amberHi = Color(hex: 0xFFF1C4)
+    static let amber = Color(hex: 0xF0B451)
+    static let amberDeep = Color(hex: 0x7A3F0E)
+    static let emerald = Color(hex: 0x7FE3D7)
+    static let turq = Color(hex: 0x53CDBF)
+    static let emeraldDeep = Color(hex: 0x0D4A44)
+    static let night1 = Color(hex: 0x132350)
+    static let night2 = Color(hex: 0x070C1A)
 }
 
 private struct NightBackground: View {
     var body: some View {
         ZStack {
-            LinearGradient(colors: [.night1, .night2], startPoint: .topTrailing, endPoint: .bottomLeading)
-            RadialGradient(colors: [Color.gold.opacity(0.22), .clear], center: .top, startRadius: 0, endRadius: 140)
+            LinearGradient(colors: [.night1, Color(hex: 0x0C1733), .night2], startPoint: .top, endPoint: .bottom)
+            RadialGradient(colors: [Color(hex: 0xF2C46B).opacity(0.28), .clear], center: .top, startRadius: 0, endRadius: 160)
         }
     }
 }
@@ -115,13 +120,13 @@ struct BeadRing: View {
     var body: some View {
         GeometryReader { geo in
             let size = min(geo.size.width, geo.size.height)
-            let cx = size / 2, cy = size * 0.47, R = size * 0.38, r = size * 0.032
-            let gap = 0.28
+            let cx = size / 2, cy = size * 160 / 342, R = size * 130 / 342, r = size * 10.6 / 342
+            let gap = 0.27
             let start = Double.pi / 2 - gap
             let span = Double.pi * 2 - gap * 2
             ZStack {
                 Circle()
-                    .stroke(Color.gold.opacity(0.22), lineWidth: size * 0.006)
+                    .stroke(Color.gold.opacity(0.32), lineWidth: size * 0.0035)
                     .frame(width: R * 2, height: R * 2)
                     .position(x: cx, y: cy)
                 ForEach(0..<33, id: \.self) { k in
@@ -131,16 +136,16 @@ struct BeadRing: View {
                     let now = !read && frac <= readFrac + nowFrac + 1e-9
                     Circle()
                         .fill(RadialGradient(
-                            colors: read ? [.goldLight, .gold, .goldDeep] : now ? [Color.white.opacity(0.95), .emerald, .emeraldDeep] : [Color.white.opacity(0.5), Color.white.opacity(0.08)],
+                            colors: read ? [.amberHi, .amber, .amberDeep] : now ? [Color(hex: 0xE4FFFA), .turq, .emeraldDeep] : [Color.white.opacity(0.42), Color(hex: 0x9FB3E0).opacity(0.1), Color.white.opacity(0.05)],
                             center: UnitPoint(x: 0.35, y: 0.3), startRadius: 0, endRadius: r * 1.6))
                         .overlay(Circle().stroke(Color.gold.opacity(read || now ? 0 : 0.35), lineWidth: size * 0.004))
-                        .shadow(color: (read ? Color.gold : now ? Color.emerald : .clear).opacity(0.55), radius: r * 0.6)
+                        .shadow(color: (read ? Color.amber : now ? Color.turq : .clear).opacity(0.6), radius: r * 0.7)
                         .frame(width: r * 2, height: r * 2)
                         .position(x: cx + R * cos(t), y: cy + R * sin(t))
                 }
                 Ellipse()
-                    .fill(LinearGradient(colors: [.goldLight, .gold, .goldDeep], startPoint: .top, endPoint: .bottom))
-                    .frame(width: r * 2.3, height: r * 3.8)
+                    .fill(RadialGradient(colors: [.amberHi, .amber, .amberDeep], center: UnitPoint(x: 0.34, y: 0.28), startRadius: 0, endRadius: r * 2.6))
+                    .frame(width: r * 2.26, height: r * 3.58)
                     .position(x: cx, y: cy + R)
                 Path { p in
                     p.move(to: CGPoint(x: cx, y: cy + R + r * 1.9))

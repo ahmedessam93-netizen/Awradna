@@ -3,7 +3,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
-import { DayState, normalize, plan, State } from './plan';
+import { DailyDay, DayState, normalize, plan, State } from './plan';
 import { refreshReminders } from './notify';
 import { refreshWidgets } from './widgets';
 
@@ -23,6 +23,8 @@ async function persist(s: State) {
   try {
     const keys = Object.keys(s.days).sort();
     while (keys.length > KEEP_DAYS) delete s.days[keys.shift() as string];
+    const dk = Object.keys(s.daily || {}).sort();
+    while (dk.length > 14) delete s.daily[dk.shift() as string];
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(s));
   } catch {}
 }
@@ -37,6 +39,7 @@ type Ctx = {
   completeDay: (dayKey: string, windowIndexes: number[]) => void;
   resetDay: (dayKey: string) => void;
   replaceAll: (s: State) => void;
+  updateDaily: (dayKey: string, fn: (d: DailyDay) => DailyDay) => void;
 };
 
 const StoreContext = createContext<Ctx | null>(null);
@@ -105,6 +108,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       commit({ ...s, days }, 400);
     },
     replaceAll: (s) => commit(normalize(s), 400),
+    updateDaily: (key, fn) => {
+      const s = latest.current;
+      const cur = s.daily[key] || {};
+      const next = fn({ ...cur, am: { ...(cur.am || {}) }, pm: { ...(cur.pm || {}) } });
+      // the daily wird does not touch reminders or widgets: no side effects needed
+      latest.current = { ...s, daily: { ...s.daily, [key]: next } };
+      setState(latest.current); persist(latest.current);
+    },
   }), [state, ready, now, commit]);
 
   return <StoreContext.Provider value={api}>{children}</StoreContext.Provider>;

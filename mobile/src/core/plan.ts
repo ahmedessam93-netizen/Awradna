@@ -13,21 +13,26 @@ export type Settings = {
   sittings: number; fajrHeavy: boolean; parts: Record<string, boolean>;
   offset: number; remType: string; fixed: string[]; notif?: boolean; onboarded?: boolean;
   city?: number | 'geo'; cityName?: string; theme?: 'auto' | 'light' | 'dark'; wake?: boolean; haptics?: boolean;
+  travel?: boolean; pageZoom?: number;
 };
 export type DayState = { read: Record<string, number>; done: Record<string, number> };
-export type State = { settings: Settings; days: Record<string, DayState> };
+export type DailyDay = { am?: Record<string, number>; pm?: Record<string, number>; bahr?: number };
+export type State = { settings: Settings; days: Record<string, DayState>; daily: Record<string, DailyDay> };
 
 export const DEFAULTS: Settings = {
   lat: null, lng: null, method: 'egypt', asr: 1, sittings: 5, fajrHeavy: false,
-  parts: { dalail: true, mughnam: true, kunuz: true, salawat: true, ahzab: false },
+  parts: { dalail: true, mughnam: true, kunuz: true, salawat: true, ahzab: false, quran: false },
   offset: 20, remType: 'prayer', fixed: ['05:30', '13:00', '16:00', '18:30', '21:00'], notif: true,
   onboarded: false, city: 0, cityName: 'القاهرة', theme: 'auto', wake: true, haptics: true,
+  travel: true, pageZoom: 1,
 };
 export function normalize(raw: any): State {
   const s = raw && raw.settings ? raw.settings : {};
   return {
-    settings: { ...DEFAULTS, ...s, parts: { ...DEFAULTS.parts, ...(s.parts || {}) } },
+    // العصر على مذهب الجمهور only (the Hanafi option was removed by design)
+    settings: { ...DEFAULTS, ...s, asr: 1, parts: { ...DEFAULTS.parts, ...(s.parts || {}) } },
     days: (raw && raw.days) || {},
+    daily: (raw && raw.daily) || {},
   };
 }
 
@@ -162,8 +167,8 @@ export function upcomingNotifications(st: State, now: Date, maxCount = 60): Plan
       const isLast = idx === wins.length - 1;
       let share = isLast ? left : left / futureWins;
       if (s.fajrHeavy && idx === 0 && left === sum(pages) && wins.length >= 4) share = sum(pages) * 0.4;
-      const body = isLast ? `آخر جلسة اليوم · ${PG(Math.round(share))} · نحو ${MN(mins(share))}` : `${PG(Math.round(share))} · نحو ${MN(mins(share))}`;
-      out.push({ at, id: `${key}-${w.i}`, title: `ورد ${DAYS[wd].name} · جلسة ${w.name}`, body });
+      const body = isLast ? `آخر جلسة اليوم، ${PG(Math.round(share))}، نحو ${MN(mins(share))}` : `${PG(Math.round(share))}، نحو ${MN(mins(share))}`;
+      out.push({ at, id: `${key}-${w.i}`, title: `ورد ${DAYS[wd].name}، جلسة ${w.name}`, body });
     });
   }
   return out.sort((a, b) => +a.at - +b.at).slice(0, maxCount);
@@ -180,4 +185,10 @@ export function changePoints(st: State, now: Date, hours = 36): Date[] {
   const q = new Date(now); q.setSeconds(0, 0); q.setMinutes(Math.floor(q.getMinutes() / 15) * 15 + 15);
   for (let x = +q; x - +now < hours * 3600000; x += 15 * 60000) pts.push(new Date(x));
   return pts.sort((a, b) => +a - +b).filter((d, i, arr) => i === 0 || +d - +arr[i - 1] > 30000);
+}
+
+// Morning or evening, for the daily wird: morning until Asr, evening after.
+export function dailySession(s: Settings, now: Date): 'am' | 'pm' {
+  const t = times(s, now);
+  return t.asr && now >= t.asr ? 'pm' : (t.fajr && now < t.fajr ? 'pm' : 'am');
 }

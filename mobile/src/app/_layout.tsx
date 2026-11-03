@@ -1,19 +1,19 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import * as BackgroundTask from 'expo-background-task';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
-import { router, Stack } from 'expo-router';
+import { DarkTheme, DefaultTheme, router, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as TaskManager from 'expo-task-manager';
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { AppState, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Sky } from '../components/ui';
 import { configureNotifications, refreshReminders } from '../core/notify';
 import { loadState, StoreProvider, useStore } from '../core/store';
 import { refreshWidgets } from '../core/widgets';
+import { travelCheck } from '../core/location';
 import { usePalette } from '../theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -35,9 +35,11 @@ TaskManager.defineTask(REFRESH_TASK, async () => {
 
 function Shell() {
   const p = usePalette();
-  const { ready } = useStore();
+  const { ready, state, setSettings } = useStore();
+  const latest = useRef(state); latest.current = state;
   const [fontsLoaded] = useFonts({
-    ArefRuqaa_700Bold: require('../../assets/fonts/ArefRuqaa_700Bold.ttf'),
+    ReemKufi_600SemiBold: require('../../assets/fonts/ReemKufi_600SemiBold.ttf'),
+    ReemKufi_700Bold: require('../../assets/fonts/ReemKufi_700Bold.ttf'),
     Amiri_400Regular: require('../../assets/fonts/Amiri_400Regular.ttf'),
     Amiri_700Bold: require('../../assets/fonts/Amiri_700Bold.ttf'),
     IBMPlexSansArabic_400Regular: require('../../assets/fonts/IBMPlexSansArabic_400Regular.ttf'),
@@ -53,20 +55,38 @@ function Shell() {
     return () => sub.remove();
   }, []);
 
-  if (!fontsLoaded || !ready) return <View style={{ flex: 1, backgroundColor: p.sky[0] }} />;
+  // Travelling: follow the person to their new city (only if they allowed location before).
+  useEffect(() => {
+    if (!ready) return;
+    const check = async () => {
+      const s = latest.current.settings;
+      if (!s.onboarded || s.travel === false) return;
+      const r = await travelCheck(s.lat, s.lng);
+      if (r) setSettings({ lat: r.lat, lng: r.lng, method: r.method, city: 'geo', cityName: r.cityName });
+    };
+    check();
+    const sub = AppState.addEventListener('change', (st) => { if (st === 'active') check(); });
+    return () => sub.remove();
+  }, [ready]);
+
+  if (!fontsLoaded || !ready) return <View style={{ flex: 1, backgroundColor: p.sky[2] }} />;
 
   const base = p.dark ? DarkTheme : DefaultTheme;
   const navTheme = { ...base, colors: { ...base.colors, background: 'transparent', card: 'transparent', primary: p.gold, text: p.ink, border: 'transparent' } };
   return (
     <ThemeProvider value={navTheme}>
-      <View style={{ flex: 1, backgroundColor: p.sky[0] }}>
+      <View style={{ flex: 1, backgroundColor: p.sky[2] }}>
         <Sky />
         <StatusBar style={p.statusBar} />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' }, animation: 'fade' }}>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="reader" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', contentStyle: { backgroundColor: p.dark ? '#0D1A17' : '#F5EFE2' } }} />
+          <Stack.Screen name="reader" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', contentStyle: { backgroundColor: p.pageBg } }} />
           <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
-          <Stack.Screen name="city" options={{ presentation: 'modal', contentStyle: { backgroundColor: p.dark ? '#0C1820' : '#F5F1E6' } }} />
+          <Stack.Screen name="city" options={{ presentation: 'modal', contentStyle: { backgroundColor: p.dark ? '#0E1A3A' : '#F5F1EA' } }} />
+          <Stack.Screen name="daily" />
+          <Stack.Screen name="book" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', contentStyle: { backgroundColor: p.pageBg } }} />
+          <Stack.Screen name="counter" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+          <Stack.Screen name="share" options={{ presentation: 'modal', contentStyle: { backgroundColor: p.dark ? '#0E1A3A' : '#F5F1EA' } }} />
         </Stack>
       </View>
     </ThemeProvider>
