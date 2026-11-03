@@ -1,0 +1,144 @@
+{
+  "expo": {
+    "name": "أورادنا",
+    "slug": "ahmed-essam",
+    "scheme": "awradna",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#0A1F19",
+    "ios": {
+      "bundleIdentifier": "com.awradna.app",
+      "supportsTablet": false,
+      "buildNumber": "1",
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.awradna.app"
+        ]
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDevelopmentRegion": "ar",
+        "CFBundleLocalizations": [
+          "ar"
+        ]
+      }
+    },
+    "android": {
+      "package": "com.awradna.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-foreground.png",
+        "backgroundColor": "#0A1F19",
+        "monochromeImage": "./assets/adaptive-monochrome.png"
+      },
+      "permissions": [
+        "POST_NOTIFICATIONS",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "blockedPermissions": [
+        "ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-localization",
+        {
+          "supportsRTL": true,
+          "forcesRTL": true
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-mark.png",
+          "imageWidth": 140,
+          "backgroundColor": "#0A1F19",
+          "dark": {
+            "image": "./assets/splash-mark.png",
+            "backgroundColor": "#0A1F19"
+          }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#E3C47A"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "لحساب مواقيت الصلاة في مدينتك."
+        }
+      ],
+      "expo-background-task",
+      "expo-font",
+      [
+        "react-native-android-widget",
+        {
+          "fonts": [
+            "./assets/fonts/Amiri_700Bold.ttf",
+            "./assets/fonts/IBMPlexSansArabic_400Regular.ttf",
+            "./assets/fonts/IBMPlexSansArabic_500Medium.ttf"
+          ],
+          "widgets": [
+            {
+              "name": "Wird",
+              "label": "ورد اليوم",
+              "description": "ذِكر من ورد اليوم، والجلسة الحالية",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "previewImage": "./assets/widget-preview.png"
+            },
+            {
+              "name": "WirdSmall",
+              "label": "ورد اليوم (صغير)",
+              "description": "حلقة التقدّم والجلسة الحالية",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "previewImage": "./assets/widget-preview-small.png"
+            },
+            {
+              "name": "WirdLarge",
+              "label": "مشكاة اللحظة",
+              "description": "ذِكر من ورد اليوم يتجدد كل ربع ساعة، مع الجلسة الحالية",
+              "minWidth": "250dp",
+              "minHeight": "250dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 4,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "previewImage": "./assets/widget-preview-large.png"
+            }
+          ]
+        }
+      ],
+      "@bacons/apple-targets"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f4abe883-2138-45dd-a1c9-d6dd0295d6b6"
+      }
+    },
+    "owner": "ahmedessam287s-team"
+  }
+}
