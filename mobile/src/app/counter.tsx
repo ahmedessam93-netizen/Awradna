@@ -1,5 +1,6 @@
 // The tasbih: tap the misbaha (or anywhere around it) once per dhikr. A light tick each bead,
 // a firmer one at each round of 33, and a gentle success when a dhikr is complete.
+import { leave } from '../core/nav';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useMemo, useRef } from 'react';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
@@ -75,7 +76,7 @@ export default function Counter() {
     <View style={{ flex: 1 }}>
       <Sky glowAt={height * 0.55} />
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <IconButton label="إغلاق" onPress={() => router.back()}><CloseIcon size={20} color={p.ink} /></IconButton>
+        <IconButton label="إغلاق" onPress={() => leave('/daily')}><CloseIcon size={20} color={p.ink} /></IconButton>
         <View style={{ flex: 1 }}>
           <Text maxFontSizeMultiplier={1.2} style={{ fontFamily: F.display, fontSize: 17, lineHeight: 24, color: p.ink, textAlign: 'right' }}>{`${section.title}، ${session === 'am' ? 'الصباح' : 'المساء'}`}</Text>
           <Text maxFontSizeMultiplier={1.2} style={{ fontFamily: F.ui, fontSize: 12.5, lineHeight: 18, color: p.muted, textAlign: 'right' }}>{done ? 'تمّ' : `الذكر ${ar(i + 1)} من ${ar(items.length)}`}</Text>
@@ -91,7 +92,7 @@ export default function Counter() {
           <Txt v="display" align="center" style={{ marginTop: 18, fontSize: 30, lineHeight: 44 }}>{`تمّ ${section.title}`}</Txt>
           <Text style={{ fontFamily: F.serif, fontSize: 21, lineHeight: 34, color: p.ink, textAlign: 'center' }}>تقبّل الله منك</Text>
           <View style={{ alignSelf: 'stretch', gap: 12, marginTop: 28 }}>
-            <GoldButton label="العودة إلى الورد اليومي" onPress={() => router.back()} />
+            <GoldButton label="العودة إلى الورد اليومي" onPress={() => leave('/daily')} />
             <GlassButton label="تراجع" icon={<UndoIcon size={18} color={p.ink} />} onPress={undo} />
           </View>
         </Animated.View>

@@ -2,6 +2,7 @@
 // Reaching the last page marks the section read for this morning or evening.
 import { useKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
+import { leave } from '../core/nav';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
@@ -36,8 +37,9 @@ export default function Book() {
   const finish = () => {
     tap('success');
     const sec = q.section || '';
-    updateDaily(P.key, (d) => (sec === 'bahr' ? { ...d, bahr: 1 } : { ...d, [session]: { ...(d[session] || {}), [sec]: 1 } }));
-    router.back();
+    // all its pages are read (the daily screen counts pages for these sections)
+    updateDaily(P.key, (d) => (sec === 'bahr' ? { ...d, bahr: 1 } : { ...d, [session]: { ...(d[session] || {}), [sec]: to - from + 1 } }));
+    leave('/daily');
   };
   const areaH = height - insets.top - insets.bottom;
 
@@ -59,7 +61,7 @@ export default function Book() {
       <View style={{ position: 'absolute', top: insets.top + 8, left: 16, right: 16 }}>
         <Bar radius={22}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8 }}>
-            <IconButton label="إغلاق" onPress={() => router.back()}><CloseIcon size={20} color={p.ink} /></IconButton>
+            <IconButton label="إغلاق" onPress={() => leave('/daily')}><CloseIcon size={20} color={p.ink} /></IconButton>
             <View style={{ flex: 1 }}>
               <Text numberOfLines={1} maxFontSizeMultiplier={1.2} style={{ fontFamily: F.display, fontSize: 17, lineHeight: 24, color: p.ink, textAlign: 'right' }}>{q.title}</Text>
               <Text numberOfLines={1} maxFontSizeMultiplier={1.2} style={{ fontFamily: F.ui, fontSize: 12.5, lineHeight: 18, color: p.muted, textAlign: 'right' }}>{`الورد اليومي، ص ${ar(ids[idx] || '')}`}</Text>

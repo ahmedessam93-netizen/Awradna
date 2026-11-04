@@ -14,6 +14,7 @@ import { configureNotifications, refreshReminders } from '../core/notify';
 import { loadState, StoreProvider, useStore } from '../core/store';
 import { refreshWidgets } from '../core/widgets';
 import { travelCheck } from '../core/location';
+import { pingDaily } from '../core/ping';
 import { usePalette } from '../theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -67,6 +68,14 @@ function Shell() {
     };
     check();
     const sub = AppState.addEventListener('change', (st) => { if (st === 'active') check(); });
+    return () => sub.remove();
+  }, [ready]);
+
+  // anonymous "opened today" count (once a day per device)
+  useEffect(() => {
+    if (!ready) return;
+    pingDaily();
+    const sub = AppState.addEventListener('change', (st) => { if (st === 'active') pingDaily(); });
     return () => sub.remove();
   }, [ready]);
 

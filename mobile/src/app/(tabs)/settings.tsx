@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronIcon, PRAYER_ICONS, ShareIcon } from '../../components/icons';
 import { Panel, Row, SectionTitle, Segmented, Toggle, Txt, useTap } from '../../components/ui';
 import { PARTS, PART_ORDER } from '../../core/data';
-import { needsHomeScreen, notificationPermission, sendTest } from '../../core/notify';
+import { needsHomeScreen, notificationPermission } from '../../core/notify';
 import { ar, fmtTime, SCHED, times, WIN_KEYS, WIN_NAMES } from '../../core/plan';
 import PT from '../../core/prayer';
 import { usePlan, useStore } from '../../core/store';
@@ -98,7 +98,6 @@ export default function Settings() {
           <Row first title="إشعار بعد كل صلاة" sub="لا يصل إن أتممت ورد اليوم" right={<Toggle label="إشعار بعد كل صلاة" value={s.notif !== false} onChange={toggleNotif} />}>
             <NoteLine k="notif" />
           </Row>
-          {s.notif !== false ? <Row title="إرسال إشعار تجريبي" sub="للتأكد أن الإشعارات تصل" onPress={async () => { const ok = await sendTest(); setNote({ k: 'notif', t: ok ? 'أُرسل. يصل خلال ثوانٍ.' : 'لم يُرسل. فعّل الإشعارات أولًا.' }); }} right={<Txt v="meta" color={p.gold}>إرسال</Txt>} /> : null}
           <Row title="بعد الأذان بـ" right={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Pressable accessibilityRole="button" accessibilityLabel="أقل" hitSlop={6} onPress={() => { tap(); setSettings({ offset: Math.max(0, (s.offset || 0) - 5) }); }} style={{ width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: p.chip, borderWidth: 1, borderColor: p.chipBorder }}><Text style={{ color: p.ink, fontSize: 18 }}>−</Text></Pressable>

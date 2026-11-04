@@ -1,4 +1,5 @@
 // الورد اليومي: opened only by those who want it, apart from the weekly wird.
+import { leave } from '../core/nav';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
@@ -40,7 +41,7 @@ export default function Daily() {
     <ScrollView contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: insets.bottom + 40, paddingHorizontal: 24, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
       <View style={{ width: W }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <IconButton label="رجوع" onPress={() => router.back()}><ChevronIcon dir="right" size={20} color={p.ink} /></IconButton>
+          <IconButton label="رجوع" onPress={() => leave('/')}><ChevronIcon dir="right" size={20} color={p.ink} /></IconButton>
           <Txt v="label">يُقرأ صباحًا ومساءً، لمن أراده</Txt>
         </View>
         <Txt v="display" style={{ marginTop: 10 }}>الورد اليومي</Txt>

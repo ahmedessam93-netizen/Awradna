@@ -1,4 +1,5 @@
 import { useKeepAwake } from 'expo-keep-awake';
+import { leave } from '../core/nav';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Platform, Pressable, Text, View, useWindowDimensions } from 'react-native';
@@ -128,7 +129,7 @@ export default function Reader() {
       if (Platform.OS === 'web' && typeof window !== 'undefined') { window.removeEventListener('pagehide', onHide); document.removeEventListener('visibilitychange', onHide); }
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const close = () => { flush(); router.back(); };
+  const close = () => { flush(); leave('/'); };
 
   const zoom = state.settings.pageZoom || 1;
   const [zoomed, setZoomed] = useState(zoom > 1);
@@ -189,7 +190,20 @@ export default function Reader() {
   const stopInfo = (k0: number) => {
     const nk = nextNonEmpty(k0); const nw = P.wins[nk >= 0 ? nk : k0];
     const left = items.reduce((a, x) => a + (x.kind === 'page' && !itemRead(read, x.it) ? x.it.w : 0), 0);
-    const line = `${left > 0.5 ? `بقيت ${PG(Math.max(1, Math.round(left)))} من ورد اليوم. ` : ''}التالية جلسة ${nw.name}${nw.time ? `، بعد ${nw.name} ${fmtTime(nw.time)}` : ''}. ولك أن تكملها الآن، فالجلسات للتيسير فقط.`;
+    // say where the person is now: the next sitting may already be due, or even behind
+    const now = new Date(); let curK = -1;
+    P.wins.forEach((w, k) => { if (w.time && w.time <= now) curK = k; });
+    const done = state.days[P.key]?.done || {};
+    let when: string;
+    if (otherDay || !nw.time) when = `التالية جلسة ${nw.name}. ولك أن تكملها الآن، فالجلسات للتيسير فقط.`;
+    else if (nw.time > now) when = `التالية جلسة ${nw.name}، بعد ${nw.name} ${fmtTime(nw.time)}. ولك أن تكملها الآن، فالجلسات للتيسير فقط.`;
+    else if (curK <= nk) when = `حان وقت جلسة ${nw.name}، فأكملها الآن إن شئت.`;
+    else {
+      const behind = P.wins.map((w, k) => k).filter((k) => k >= nk && k < curK && P.segs[k].length && !done[P.wins[k].i]).map((k) => P.wins[k].name);
+      const names = behind.length ? behind : [nw.name];
+      when = `دخل وقت ${P.wins[curK].name}، وما زالت قبله ${names.length > 1 ? 'جلسات' : 'جلسة'} ${names.join('، ')}. أكملها الآن إن شئت، فالجلسات للتيسير فقط.`;
+    }
+    const line = `${left > 0.5 ? `بقيت ${PG(Math.max(1, Math.round(left)))} من ورد اليوم. ` : ''}${when}`;
     return { title: `أتممتَ جلسة ${P.wins[k0].name}`, line, cont: `أكمل: جلسة ${nw.name}` };
   };
   const finInfo = () => {

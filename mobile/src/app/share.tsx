@@ -1,16 +1,18 @@
 import * as Clipboard from 'expo-clipboard';
+import { leave } from '../core/nav';
 import { router } from 'expo-router';
 import qrcode from 'qrcode-generator';
 import React, { useMemo, useState } from 'react';
-import { Share, Text, View, useWindowDimensions } from 'react-native';
+import { Platform, Share, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { CloseIcon, ShareIcon } from '../components/icons';
 import { GlassButton, GoldButton, IconButton, Panel, Txt, useTap } from '../components/ui';
 import { F, usePalette } from '../theme';
 
-const APP_LINK = 'https://awradna.netlify.app';
-const MESSAGE = `أورادنا: ورد اليوم من كتاب «أورادنا» للطريقة الصديقية الشاذلية، في جلسات قصيرة بعد كل صلاة.\n${APP_LINK}`;
+// Sharing gives the Android download page (the iPhone version is opened from the site itself).
+const APP_LINK = 'https://awradna.netlify.app/android/';
+const MESSAGE = `أورادنا لأندرويد: ورد اليوم من كتاب «أورادنا» للطريقة الصديقية الشاذلية، في جلسات قصيرة بعد كل صلاة.\n${APP_LINK}`;
 
 function QR({ value, size }: { value: string; size: number }) {
   const { d, n } = useMemo(() => {
@@ -21,7 +23,7 @@ function QR({ value, size }: { value: string; size: number }) {
   }, [value]);
   const pad = 2;
   return (
-    <Svg width={size} height={size} viewBox={`${-pad} ${-pad} ${n + pad * 2} ${n + pad * 2}`} accessibilityLabel="رمز QR لرابط التطبيق">
+    <Svg width={size} height={size} viewBox={`${-pad} ${-pad} ${n + pad * 2} ${n + pad * 2}`} accessibilityLabel="رمز QR لرابط تطبيق أندرويد">
       <Rect x={-pad} y={-pad} width={n + pad * 2} height={n + pad * 2} fill="#F3EAD7" />
       <Path d={d} fill="#0B1329" />
     </Svg>
@@ -33,9 +35,9 @@ export default function ShareScreen() {
   const [copied, setCopied] = useState(false);
   const W = Math.min(width, 480) - 48;
   return (
-    <View style={{ flex: 1, paddingTop: 18, paddingBottom: insets.bottom + 24, paddingHorizontal: 24, alignItems: 'center' }}>
+    <View style={{ flex: 1, paddingTop: (Platform.OS === 'ios' ? 0 : insets.top) + 18, paddingBottom: insets.bottom + 24, paddingHorizontal: 24, alignItems: 'center' }}>
       <View style={{ width: W, flexDirection: 'row', justifyContent: 'flex-end' }}>
-        <IconButton label="إغلاق" onPress={() => router.back()}><CloseIcon size={20} color={p.ink} /></IconButton>
+        <IconButton label="إغلاق" onPress={() => leave('/settings')}><CloseIcon size={20} color={p.ink} /></IconButton>
       </View>
       <View style={{ width: W, flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <Txt v="display" align="center" style={{ fontSize: 30, lineHeight: 42 }}>شارك أورادنا</Txt>
@@ -43,8 +45,8 @@ export default function ShareScreen() {
           <View style={{ alignItems: 'center', gap: 14, paddingVertical: 14 }}>
             <View style={{ borderRadius: 20, overflow: 'hidden' }}><QR value={APP_LINK} size={Math.min(200, W - 80)} /></View>
             <Text style={{ fontFamily: F.display, fontSize: 22, lineHeight: 30, color: p.goldLight }}>أورادنا</Text>
-            <Txt v="meta" align="center" style={{ lineHeight: 24 }}>ورد اليوم من كتاب «أورادنا» في جلسات قصيرة بعد كل صلاة، مع إشعارات وويدجت.</Txt>
-            <Text style={{ fontFamily: F.ui, fontSize: 13, color: p.gold, writingDirection: 'ltr' }}>awradna.netlify.app</Text>
+            <Txt v="meta" align="center" style={{ lineHeight: 24 }}>تطبيق أندرويد: ورد اليوم من كتاب «أورادنا» في جلسات قصيرة بعد كل صلاة، مع إشعارات وويدجت.</Txt>
+            <Text style={{ fontFamily: F.ui, fontSize: 13, color: p.gold, writingDirection: 'ltr' }}>awradna.netlify.app/android</Text>
           </View>
         </Panel>
       </View>
