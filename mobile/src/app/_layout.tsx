@@ -6,7 +6,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as TaskManager from 'expo-task-manager';
 import React, { useEffect, useRef } from 'react';
-import { AppState, View } from 'react-native';
+import { AppState, Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Sky } from '../components/ui';
@@ -22,7 +22,7 @@ configureNotifications();
 // Runs every few hours even when the app is closed: keeps the rolling window of
 // reminders filled and the widgets on the right sitting.
 const REFRESH_TASK = 'awradna-refresh';
-TaskManager.defineTask(REFRESH_TASK, async () => {
+if (Platform.OS !== 'web') TaskManager.defineTask(REFRESH_TASK, async () => {
   try {
     const s = await loadState();
     await refreshReminders(s);
@@ -50,6 +50,7 @@ function Shell() {
   useEffect(() => { if (fontsLoaded && ready) SplashScreen.hideAsync().catch(() => {}); }, [fontsLoaded, ready]);
 
   useEffect(() => {
+    if (Platform.OS === 'web') return; // web: the service worker handles notification taps
     BackgroundTask.registerTaskAsync(REFRESH_TASK, { minimumInterval: 15 }).catch(() => {});
     const sub = Notifications.addNotificationResponseReceivedListener(() => { router.navigate('/'); });
     return () => sub.remove();

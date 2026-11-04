@@ -11,6 +11,7 @@ import { DAYS } from '../../core/data';
 import { ar, fmtTime, mins, MN, PG, sum } from '../../core/plan';
 import { usePlan, useStore } from '../../core/store';
 import { useUpdate } from '../../core/update';
+import { WebNotice } from '../../components/WebNotice';
 import { Linking } from 'react-native';
 import { F, usePalette } from '../../theme';
 
@@ -91,6 +92,7 @@ export default function Today() {
           ) : null}
         </Animated.View>
 
+        <WebNotice />
         {update ? (
           <Pressable onPress={() => { tap(); Linking.openURL(update.url); }} accessibilityRole="button" accessibilityLabel="تحديث التطبيق"
             style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: p.turqSoft, borderWidth: 1, borderColor: p.turq }}>

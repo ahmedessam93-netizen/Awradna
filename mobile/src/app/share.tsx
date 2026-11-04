@@ -43,7 +43,7 @@ export default function ShareScreen() {
           <View style={{ alignItems: 'center', gap: 14, paddingVertical: 14 }}>
             <View style={{ borderRadius: 20, overflow: 'hidden' }}><QR value={APP_LINK} size={Math.min(200, W - 80)} /></View>
             <Text style={{ fontFamily: F.display, fontSize: 22, lineHeight: 30, color: p.goldLight }}>أورادنا</Text>
-            <Txt v="meta" align="center" style={{ lineHeight: 24 }}>ورد اليوم من كتاب «أورادنا» في جلسات قصيرة بعد كل صلاة، مع تذكير وويدجت.</Txt>
+            <Txt v="meta" align="center" style={{ lineHeight: 24 }}>ورد اليوم من كتاب «أورادنا» في جلسات قصيرة بعد كل صلاة، مع إشعارات وويدجت.</Txt>
             <Text style={{ fontFamily: F.ui, fontSize: 13, color: p.gold, writingDirection: 'ltr' }}>awradna.netlify.app</Text>
           </View>
         </Panel>

@@ -54,3 +54,13 @@ export async function refreshReminders(s: State) {
   })();
   try { await running; } finally { running = null; }
 }
+
+// Web-only helpers (see notify.web.ts); the native app never needs them.
+export const pushSupported = () => true;
+export const isIOS = () => false;
+export const isStandalone = () => true;
+export const needsHomeScreen = () => false;
+export async function sendTest(): Promise<boolean> {
+  await Notifications.scheduleNotificationAsync({ content: { title: 'أورادنا', body: 'الإشعارات تعمل. ستصلك بعد كل صلاة إن شاء الله.' }, trigger: null }).catch(() => {});
+  return true;
+}

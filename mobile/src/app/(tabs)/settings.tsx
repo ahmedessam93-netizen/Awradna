@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronIcon, PRAYER_ICONS, ShareIcon } from '../../components/icons';
 import { Panel, Row, SectionTitle, Segmented, Toggle, Txt, useTap } from '../../components/ui';
 import { PARTS, PART_ORDER } from '../../core/data';
-import { notificationPermission } from '../../core/notify';
+import { needsHomeScreen, notificationPermission, sendTest } from '../../core/notify';
 import { ar, fmtTime, SCHED, times, WIN_KEYS, WIN_NAMES } from '../../core/plan';
 import PT from '../../core/prayer';
 import { usePlan, useStore } from '../../core/store';
@@ -29,7 +29,7 @@ export default function Settings() {
   const t = times(s, new Date());
 
   const toggleNotif = async (v: boolean) => {
-    if (v && !(await notificationPermission(true))) { setNote({ k: 'notif', t: 'الإشعارات مغلقة لهذا التطبيق في إعدادات الهاتف. افتحها من هناك ثم عد.' }); setSettings({ notif: true }); return; }
+    if (v && !(await notificationPermission(true))) { setNote({ k: 'notif', t: needsHomeScreen() ? 'على الآيفون: أضف أورادنا إلى الشاشة الرئيسية أولًا (زر المشاركة، ثم «إضافة إلى الشاشة الرئيسية»)، ثم افتحه من أيقونته وفعّل الإشعارات.' : 'الإشعارات مغلقة لهذا التطبيق في إعدادات الهاتف. افتحها من هناك ثم عد.' }); setSettings({ notif: true }); return; }
     setNote(null); setSettings({ notif: v });
   };
   const toggleTravel = async (v: boolean) => {
@@ -93,11 +93,12 @@ export default function Settings() {
           ))}
         </Panel>
 
-        <SectionTitle>التذكير</SectionTitle>
+        <SectionTitle>الإشعارات</SectionTitle>
         <Panel>
-          <Row first title="تذكير بعد كل صلاة" sub="لا يصل إن أتممت ورد اليوم" right={<Toggle label="تذكير بعد كل صلاة" value={s.notif !== false} onChange={toggleNotif} />}>
+          <Row first title="إشعار بعد كل صلاة" sub="لا يصل إن أتممت ورد اليوم" right={<Toggle label="إشعار بعد كل صلاة" value={s.notif !== false} onChange={toggleNotif} />}>
             <NoteLine k="notif" />
           </Row>
+          {s.notif !== false ? <Row title="إرسال إشعار تجريبي" sub="للتأكد أن الإشعارات تصل" onPress={async () => { const ok = await sendTest(); setNote({ k: 'notif', t: ok ? 'أُرسل. يصل خلال ثوانٍ.' : 'لم يُرسل. فعّل الإشعارات أولًا.' }); }} right={<Txt v="meta" color={p.gold}>إرسال</Txt>} /> : null}
           <Row title="بعد الأذان بـ" right={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Pressable accessibilityRole="button" accessibilityLabel="أقل" hitSlop={6} onPress={() => { tap(); setSettings({ offset: Math.max(0, (s.offset || 0) - 5) }); }} style={{ width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: p.chip, borderWidth: 1, borderColor: p.chipBorder }}><Text style={{ color: p.ink, fontSize: 18 }}>−</Text></Pressable>

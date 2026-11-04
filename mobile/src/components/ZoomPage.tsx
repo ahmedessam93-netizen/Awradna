@@ -1,6 +1,6 @@
 // One book page: fits the screen, pinch or double-tap to zoom, drag when zoomed.
 // While zoomed, page swiping is paused so the drag moves the page instead.
-import { Image } from 'expo-image';
+import { PageImage } from './PageImage';
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -62,7 +62,7 @@ export function ZoomPage({ source, aspect, width, height, onZoomChange, onTap, l
     <GestureDetector gesture={gesture}>
       <View style={{ width, height, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }} accessible accessibilityLabel={label}>
         <Animated.View style={[{ width: fitW, height: fitH }, st]}>
-          <Image source={source} style={{ width: fitW, height: fitH }} contentFit="contain" tintColor={tint} transition={120} cachePolicy="memory-disk" />
+          <PageImage source={source} tint={tint} width={fitW} height={fitH} />
         </Animated.View>
       </View>
     </GestureDetector>

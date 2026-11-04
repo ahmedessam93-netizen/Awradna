@@ -2,7 +2,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
-import PagerView from 'react-native-pager-view';
+import { Pager, PagerHandle } from '../components/Pager';
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronIcon, CloseIcon } from '../components/icons';
@@ -67,7 +67,7 @@ export default function Reader() {
     return out;
   }, [seq, stopAfter]);
 
-  const pager = useRef<PagerView>(null);
+  const pager = useRef<PagerHandle>(null);
   const [idx, setIdx] = useState(0); const idxRef = useRef(0);
   const zoom = state.settings.pageZoom || 1;
   const [zoomed, setZoomed] = useState(zoom > 1);
@@ -113,7 +113,7 @@ export default function Reader() {
   return (
     <View style={{ flex: 1, backgroundColor: p.pageBg }}>
       {state.settings.wake !== false && <KeepAwake />}
-      <PagerView ref={pager} style={{ flex: 1 }} initialPage={0} layoutDirection="rtl" offscreenPageLimit={2} scrollEnabled={!zoomed} onPageSelected={(e) => onSelected(e.nativeEvent.position)}>
+      <Pager ref={pager} style={{ flex: 1 }} scrollEnabled={!zoomed} onPageSelected={onSelected}>
         {items.map((it, i) => {
           if (it.kind === 'page') {
             const id = it.page.id; const [pw, ph] = PAGE_SIZE[id] || [1110, 1768];
@@ -139,7 +139,7 @@ export default function Reader() {
             </View>
           );
         })}
-      </PagerView>
+      </Pager>
 
       {/* top: where you are */}
       {cur.kind === 'page' && (

@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
-import PagerView from 'react-native-pager-view';
+import { Pager, PagerHandle } from '../components/Pager';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronIcon, CloseIcon } from '../components/icons';
 import { Bar, IconButton, useTap } from '../components/ui';
@@ -25,7 +25,7 @@ export default function Book() {
   const ids = Array.from({ length: to - from + 1 }, (_, k) => String(from + k)).filter((id) => PAGE_IMAGES[id]);
   const { state, updateDaily } = useStore(); const P = usePlan();
   const session = (q.session === 'pm' ? 'pm' : 'am') as Session;
-  const pager = useRef<PagerView>(null);
+  const pager = useRef<PagerHandle>(null);
   const [idx, setIdx] = useState(0); const idxRef = useRef(0);
   const zoom = state.settings.pageZoom || 1;
   const [zoomed, setZoomed] = useState(zoom > 1);
@@ -42,8 +42,8 @@ export default function Book() {
   return (
     <View style={{ flex: 1, backgroundColor: p.pageBg }}>
       {state.settings.wake !== false && <KeepAwake />}
-      <PagerView ref={pager} style={{ flex: 1 }} initialPage={0} layoutDirection="rtl" offscreenPageLimit={2} scrollEnabled={!zoomed}
-        onPageSelected={(e) => { const i = e.nativeEvent.position; setIdx(i); idxRef.current = i; setZoomed(zoom > 1); tap(); }}>
+      <Pager ref={pager} style={{ flex: 1 }} scrollEnabled={!zoomed}
+        onPageSelected={(i) => { setIdx(i); idxRef.current = i; setZoomed(zoom > 1); tap(); }}>
         {ids.map((id, i) => {
           const [pw, ph] = PAGE_SIZE[id] || [1110, 1768];
           return (
@@ -53,7 +53,7 @@ export default function Book() {
             </View>
           );
         })}
-      </PagerView>
+      </Pager>
       <View style={{ position: 'absolute', top: insets.top + 8, left: 16, right: 16 }}>
         <Bar radius={22}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8 }}>

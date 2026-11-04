@@ -91,7 +91,7 @@ export default function Onboarding() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 }}>
                 <BellIcon size={22} color={p.gold} />
                 <View style={{ flex: 1 }}>
-                  <Txt v="h3">تذكير بعد كل صلاة</Txt>
+                  <Txt v="h3">إشعار بعد كل صلاة</Txt>
                   <Txt v="label">{notifAsked ? (s.notif ? 'تم. يمكنك تغيير ذلك من الإعدادات.' : 'لم يُسمح بالإشعارات. يمكنك تفعيلها لاحقًا.') : 'إشعار هادئ بالجلسة وعدد صفحاتها.'}</Txt>
                 </View>
               </View>
