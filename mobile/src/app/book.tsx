@@ -3,7 +3,7 @@
 import { useKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { Pager, PagerHandle } from '../components/Pager';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { Bar, IconButton, useTap } from '../components/ui';
 import { ZoomPage } from '../components/ZoomPage';
 import { Session } from '../core/daily';
 import { PAGE_IMAGES, PAGE_SIZE } from '../core/pages';
+import { prefetchPages } from '../core/prefetch';
 import { ar } from '../core/plan';
 import { usePlan, useStore } from '../core/store';
 import { F, usePalette } from '../theme';
@@ -26,6 +27,7 @@ export default function Book() {
   const { state, updateDaily } = useStore(); const P = usePlan();
   const session = (q.session === 'pm' ? 'pm' : 'am') as Session;
   const pager = useRef<PagerHandle>(null);
+  useEffect(() => { prefetchPages(ids.map((id) => PAGE_IMAGES[id])); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [idx, setIdx] = useState(0); const idxRef = useRef(0);
   const zoom = state.settings.pageZoom || 1;
   const [zoomed, setZoomed] = useState(zoom > 1);

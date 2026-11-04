@@ -1,6 +1,6 @@
 import { useKeepAwake } from 'expo-keep-awake';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { Pager, PagerHandle } from '../components/Pager';
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -11,6 +11,7 @@ import { Bar, GlassButton, GoldButton, IconButton, Sky, Txt, useTap } from '../c
 import { LinearGradient } from 'expo-linear-gradient';
 import { ZoomPage } from '../components/ZoomPage';
 import { PAGE_IMAGES, PAGE_SIZE } from '../core/pages';
+import { prefetchPages } from '../core/prefetch';
 import { ar, cnt, fmtTime, mins, MN, Page, PG, planForDay, sittingPortion, sum } from '../core/plan';
 import { useStore } from '../core/store';
 import { F, usePalette } from '../theme';
@@ -74,6 +75,8 @@ export default function Reader() {
   }, [seq, stopAfter]);
 
   const pager = useRef<PagerHandle>(null);
+  // load the coming pages ahead, so turning a page never waits
+  useEffect(() => { prefetchPages(seq.slice(0, 16).map((x) => PAGE_IMAGES[x.id])); }, [seq]);
   const [idx, setIdx] = useState(0); const idxRef = useRef(0);
   const zoom = state.settings.pageZoom || 1;
   const [zoomed, setZoomed] = useState(zoom > 1);
@@ -89,7 +92,8 @@ export default function Reader() {
     setZoomed(items[i].kind === 'page' && zoom > 1);
     const ids: string[] = [];
     for (let j = 0; j < i; j++) { const it = items[j]; if (it.kind === 'page') ids.push(it.page.id); }
-    if (!review && ids.length) markRead(P.key, ids);
+    // save after the page has turned, so saving never delays the turn
+    if (!review && ids.length) setTimeout(() => markRead(P.key, ids), 400);
     const it = items[i];
     if (!review && it.kind === 'stop') { markSitting(P.key, winIdx); tap('success'); }
     if (it.kind === 'fin') { if (!review) completeDay(P.key, P.wins.map((x) => x.i)); tap('success'); }
