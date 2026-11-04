@@ -1,0 +1,18 @@
+name: قرآن (تسبيع) – Android install link
+
+# The Expo project is linked to the mobile/ folder; this builds the second app, in tasbee/,
+# from the same repository (its own package name and signing key).
+on:
+  push:
+    branches: ['build/tasbee-android']
+
+jobs:
+  build_tasbee:
+    name: Build قرآن (تسبيع)
+    steps:
+      - uses: eas/checkout
+      - name: Build the Android install file
+        run: |
+          cd ../tasbee
+          npm ci --legacy-peer-deps
+          npx eas-cli@latest build --platform android --profile preview --non-interactive --no-wait
