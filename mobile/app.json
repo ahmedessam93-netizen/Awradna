@@ -27,7 +27,7 @@
     },
     "android": {
       "package": "com.awradna.app",
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-foreground.png",
         "backgroundColor": "#0C1733",
@@ -133,7 +133,8 @@
           ]
         }
       ],
-      "@bacons/apple-targets"
+      "@bacons/apple-targets",
+      ["expo-build-properties", { "android": { "buildArchs": ["arm64-v8a", "armeabi-v7a"] } }]
     ],
     "experiments": {
       "typedRoutes": false

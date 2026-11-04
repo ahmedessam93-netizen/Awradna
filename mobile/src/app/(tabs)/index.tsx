@@ -10,6 +10,8 @@ import { GlassButton, GoldButton, Mark, Panel, Txt, useTap } from '../../compone
 import { DAYS } from '../../core/data';
 import { ar, fmtTime, mins, MN, PG, sum } from '../../core/plan';
 import { usePlan, useStore } from '../../core/store';
+import { useUpdate } from '../../core/update';
+import { Linking } from 'react-native';
 import { F, usePalette } from '../../theme';
 
 const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
@@ -21,6 +23,7 @@ const pn = (id: string) => ar(id.replace(/[ab]$/, ''));
 export default function Today() {
   const p = usePalette(); const P = usePlan(); const { state, now } = useStore(); const tap = useTap();
   const insets = useSafeAreaInsets(); const { width } = useWindowDimensions();
+  const update = useUpdate();
   const W = Math.min(width, 520) - 48;
   const ring = Math.min(W, 342);
 
@@ -87,6 +90,17 @@ export default function Today() {
             </Pressable>
           ) : null}
         </Animated.View>
+
+        {update ? (
+          <Pressable onPress={() => { tap(); Linking.openURL(update.url); }} accessibilityRole="button" accessibilityLabel="تحديث التطبيق"
+            style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: p.turqSoft, borderWidth: 1, borderColor: p.turq }}>
+            <View style={{ flex: 1 }}>
+              <Txt v="h3" style={{ fontSize: 15 }}>{`إصدار جديد من أورادنا (${update.version})`}</Txt>
+              <Txt v="label">{update.notes || 'اضغط للتحميل، وسيبقى تقدّمك كما هو.'}</Txt>
+            </View>
+            <Text style={{ fontFamily: F.uiBold, fontSize: 14, color: p.turqHi }}>تحديث</Text>
+          </Pressable>
+        ) : null}
 
         {/* the misbaha */}
         <Animated.View entering={FadeInDown.delay(60).duration(600)} style={{ alignItems: 'center', marginTop: 14 }}>
