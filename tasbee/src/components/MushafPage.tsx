@@ -77,7 +77,8 @@ function MushafPageImpl({ page, width, height, zoom = 1, ink, faint, frame, from
       {lines.map((line, li) => {
         if (isTitle(line)) {
           const s = line[1];
-          const fsF = L.textW / 8;
+          // the frame is about 8 em wide and 1 em tall: as wide as the line, but never taller than it
+          const fsF = Math.min(L.textW / 8, L.row * 0.96);
           const lit = inRange(pos(page, li, 0)) ? 1 : 0.28;
           return (
             <View key={li} style={{ width: L.textW, height: L.row, alignItems: 'center', justifyContent: 'center', opacity: lit }}>

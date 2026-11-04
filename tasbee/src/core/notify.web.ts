@@ -8,7 +8,7 @@ export const isIOS = () => typeof navigator !== 'undefined' && /iPhone|iPad|iPod
 export const isStandalone = () => typeof window !== 'undefined' && (window.matchMedia?.('(display-mode: standalone)').matches || (navigator as any).standalone === true);
 export const needsHomeScreen = () => false;
 export function configureNotifications() {
-  if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+  if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) navigator.serviceWorker.register(`${process.env.EXPO_BASE_URL || ''}/sw.js`).catch(() => {});
 }
 export async function notificationPermission(_ask: boolean): Promise<boolean> { return false; }
 export async function refreshReminders(_s: State) {}

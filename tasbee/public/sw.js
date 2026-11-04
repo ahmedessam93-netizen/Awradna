@@ -16,15 +16,15 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(caches.open(STATIC).then(async (c) => { const hit = await c.match(req); if (hit) return hit; try { const res = await fetch(req); if (res.ok) c.put(req, res.clone()); return res; } catch (err) { return hit || Response.error(); } }));
     return;
   }
-  if (url.pathname.startsWith('/.netlify/') || url.pathname.startsWith('/android/')) return;
+  
   // hashed bundles and assets never change: cache first
-  if (url.pathname.startsWith('/_expo/') || url.pathname.startsWith('/assets/')) {
+  if (url.pathname.includes('/_expo/') || url.pathname.includes('/assets/')) {
     e.respondWith(caches.open(STATIC).then(async (c) => { const hit = await c.match(req); if (hit) return hit; const res = await fetch(req); if (res.ok) c.put(req, res.clone()); return res; }));
     return;
   }
   // the page itself: network first, cache when offline
   e.respondWith(fetch(req).then((res) => { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); return res; })
-    .catch(() => caches.match(req).then((r) => r || caches.match('/'))));
+    .catch(() => caches.match(req).then((r) => r || caches.match(self.registration.scope))));
 });
 
 self.addEventListener('push', (e) => {
