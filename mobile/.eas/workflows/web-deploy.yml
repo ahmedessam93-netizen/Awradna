@@ -1,0 +1,14 @@
+name: Web (Expo Hosting)
+
+# Pushing to this branch publishes the web app and the Android download page on Expo Hosting
+# (reachable where netlify.app is blocked, such as Egypt).
+on:
+  push:
+    branches: ['deploy/web']
+
+jobs:
+  deploy_web:
+    name: Deploy web
+    type: deploy
+    params:
+      prod: true
