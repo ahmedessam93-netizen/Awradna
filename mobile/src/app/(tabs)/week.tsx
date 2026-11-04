@@ -1,9 +1,11 @@
+import { router } from 'expo-router';
 import React, { useMemo } from 'react';
-import { ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PetalState, WeekRosette } from '../../components/ornaments';
-import { Mark, Panel, Txt } from '../../components/ui';
+import { Mark, Panel, Txt, useTap } from '../../components/ui';
+import { ChevronIcon } from '../../components/icons';
 import { addDays, ar, atMidnight, cnt, dayPages, dkey, PG, sum } from '../../core/plan';
 import { usePlan, useStore } from '../../core/store';
 import { F, usePalette } from '../../theme';
@@ -12,7 +14,7 @@ const NAMES = ['الإثنين', 'الثلاثاء', 'الأربعاء', 'الخ
 function monday(d: Date) { const x = atMidnight(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; }
 
 export default function Week() {
-  const p = usePalette(); const P = usePlan(); const { state } = useStore(); const insets = useSafeAreaInsets(); const { width } = useWindowDimensions();
+  const p = usePalette(); const P = usePlan(); const { state, setViewDay } = useStore(); const tap = useTap(); const insets = useSafeAreaInsets(); const { width } = useWindowDimensions();
   const W = Math.min(width, 520) - 48;
   const stat = (d: Date) => {
     const pages = dayPages(state.settings, d.getDay());
@@ -59,17 +61,19 @@ export default function Week() {
               const label = x.st === 'done' ? 'اكتمل' : x.st === 'today' ? `${ar(Math.round(x.s.read))} من ${ar(Math.round(x.s.total))} صفحة` : x.st === 'missed' ? (x.s.read > 0 ? `${ar(Math.round(x.s.read))} من ${ar(Math.round(x.s.total))}` : 'فات') : PG(Math.round(x.s.total));
               const color = x.st === 'done' ? p.gold : x.st === 'today' ? p.turqHi : p.faint;
               return (
-                <View key={x.n} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: p.rule }}>
+                <Pressable key={x.n} onPress={() => { tap(); setViewDay(x.today ? null : dkey(x.d)); router.navigate('/'); }} accessibilityRole="button" accessibilityLabel={`افتح ورد ${x.n}`}
+                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, opacity: pressed ? 0.6 : 1, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: p.rule })}>
                   <Mark size={24} color={x.st === 'done' ? p.gold : x.st === 'today' ? p.turq : p.goldFaint} />
                   <Txt v="body" style={{ flex: 1, fontFamily: x.today ? F.uiBold : F.uiMed, color: x.st === 'future' ? p.muted : p.ink }}>{x.n + (x.today ? '، اليوم' : '')}</Txt>
                   <Text maxFontSizeMultiplier={1.2} style={{ fontFamily: F.ui, fontSize: 13, color }}>{label}</Text>
-                </View>
+                  <ChevronIcon size={16} color={p.faint} />
+                </Pressable>
               );
             })}
           </Panel>
         </Animated.View>
 
-        <Txt v="label" style={{ marginTop: 16, marginHorizontal: 4, lineHeight: 21 }}>لكل يوم ورده. ما فات لا يُنقل إلى الغد، وكل يوم يبدأ بعد الفجر.</Txt>
+        <Txt v="label" style={{ marginTop: 16, marginHorizontal: 4, lineHeight: 21 }}>لكل يوم ورده، ويبدأ بعد الفجر. اضغط أي يوم لتفتحه، وما فاتك يبقى متاحًا لتقرأه.</Txt>
       </View>
     </ScrollView>
   );

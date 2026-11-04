@@ -8,8 +8,10 @@ import { BookIcon, ChevronIcon, MisbahaIcon, PinIcon } from '../../components/ic
 import { Orb, PrayerPath } from '../../components/PrayerPath';
 import { GlassButton, GoldButton, Mark, Panel, Txt, useTap } from '../../components/ui';
 import { DAYS } from '../../core/data';
-import { ar, fmtTime, mins, MN, PG, sum } from '../../core/plan';
-import { usePlan, useStore } from '../../core/store';
+import { plan as planToday0 } from '../../core/plan';
+const planToday = (st: any, now: Date) => planToday0(st, now).key;
+import { addDays, ar, dkey, fmtTime, mins, MN, PG, sum, sittingPortion } from '../../core/plan';
+import { useStore, useViewPlan } from '../../core/store';
 import { useUpdate } from '../../core/update';
 import { WebNotice } from '../../components/WebNotice';
 import { Linking } from 'react-native';
@@ -22,7 +24,10 @@ function hijri(d: Date) {
 const pn = (id: string) => ar(id.replace(/[ab]$/, ''));
 
 export default function Today() {
-  const p = usePalette(); const P = usePlan(); const { state, now } = useStore(); const tap = useTap();
+  const p = usePalette(); const P = useViewPlan(); const { state, now, viewDay, setViewDay } = useStore(); const tap = useTap();
+  const todayKey = useMemo(() => planToday(state, now), [state, now]);
+  const isToday = P.key === todayKey;
+  const isPast = !isToday && P.key < todayKey;
   const insets = useSafeAreaInsets(); const { width } = useWindowDimensions();
   const update = useUpdate();
   const W = Math.min(width, 520) - 48;
@@ -34,12 +39,34 @@ export default function Today() {
   const first = P.portion[0], last = P.portion[P.portion.length - 1];
   const range = !first ? '' : first === last ? `ص ${pn(first.id)}` : `من ص ${pn(first.id)} إلى ص ${pn(last.id)}`;
   const startAt = P.remaining.length ? P.pages.indexOf(P.remaining[0]) : 0;
-  const open = (start: number, review = false) => { tap('medium'); router.push({ pathname: '/reader', params: { start: String(start), review: review ? '1' : '0' } }); };
+  const open = (start: number, review = false, win?: number) => {
+    tap('medium');
+    router.push({ pathname: '/reader', params: { start: String(start), review: review ? '1' : '0', day: P.key, ...(win != null ? { win: String(win) } : {}) } });
+  };
+  // any sitting can be opened: a missed one keeps its pages
+  const openSitting = (k: number) => {
+    const done = !!(state.days[P.key]?.done || {})[P.wins[k].i];
+    if (P.complete || done) { open(0, true); return; }
+    const por = sittingPortion(P, k);
+    open(por.length ? P.pages.indexOf(por[0]) : 0, false, k);
+  };
+  const shiftDay = (n: number) => {
+    const [y, m, d] = P.key.split('-').map(Number);
+    const k = dkey(addDays(new Date(y, m - 1, d), n));
+    tap(); setViewDay(k === todayKey ? null : k);
+  };
+  const [ty, tm, td] = todayKey.split('-').map(Number);
+  const offset = Math.round((+new Date(P.date) - +new Date(ty, tm - 1, td)) / 864e5);
 
   // what the hero says
   let eyebrow = '', title = '', line = '', cta = '', secondary = false, eyeTone: 'now' | 'done' | 'plain' = 'now';
-  if (!P.pages.length) { eyebrow = 'لا شيء مختار'; title = 'اختر أجزاء الورد'; line = 'كل الأجزاء مُعطّلة في الإعدادات.'; eyeTone = 'plain'; }
-  else if (P.complete) { eyebrow = 'اكتمل الورد'; title = `تمّ ورد ${P.dayName}`; line = 'تقبّل الله. ورد الغد يبدأ بعد الفجر.'; eyeTone = 'done'; }
+  if (P.pages.length && !isToday && !P.complete) {
+    eyebrow = isPast ? (P.readW > 0 ? 'يوم سابق لم يكتمل' : 'يوم سابق') : 'يوم قادم';
+    title = isPast ? (P.readW > 0 ? `ما بقي من ورد ${P.dayName}` : `ورد ${P.dayName}`) : `ورد ${P.dayName}`;
+    line = isPast ? `${PG(P.left)}، اقرأها متى شئت.` : `${PG(P.total)}، يبدأ بعد فجر ذلك اليوم. يمكنك قراءته الآن إن شئت.`;
+    cta = P.readW > 0 ? 'تابع القراءة' : `اقرأ ورد ${P.dayName}`; eyeTone = 'plain';
+  } else if (!P.pages.length) { eyebrow = 'لا شيء مختار'; title = 'اختر أجزاء الورد'; line = 'كل الأجزاء مُعطّلة في الإعدادات.'; eyeTone = 'plain'; }
+  else if (P.complete) { eyebrow = 'اكتمل الورد'; title = `تمّ ورد ${P.dayName}`; line = isToday ? 'تقبّل الله. ورد الغد يبدأ بعد الفجر.' : 'تقبّل الله.'; eyeTone = 'done'; }
   else if (P.curDone && P.nextIdx > P.cur) { eyebrow = `أتممت جلسة ${P.wins[P.cur].name}`; title = `القادمة: جلسة ${w.name}`; line = `بعد صلاة ${w.name}، ${fmtTime(w.time)}`; cta = 'اقرأ الآن على أي حال'; secondary = true; eyeTone = 'done'; }
   else if (P.curDone && isLast) { eyebrow = `أتممت جلسة ${w.name}`; title = 'ما بقي من ورد اليوم'; line = `${PG(P.left)}، اقرأها متى تيسّر قبل النوم.`; cta = 'تابع القراءة'; eyeTone = 'done'; }
   else {
@@ -51,7 +78,8 @@ export default function Today() {
 
   const orbs: Orb[] = P.wins.map((x, k) => {
     const done = P.complete || !!(state.days[P.key]?.done || {})[x.i];
-    const passed = !!x.time && x.time <= now;
+    const passed = isPast || (isToday && !!x.time && x.time <= now);
+    if (!isToday) return { i: x.i, name: x.name, time: x.time, state: done ? 'done' : isPast ? 'missed' : 'upcoming' };
     return { i: x.i, name: x.name, time: x.time, state: done ? 'done' : k === P.nextIdx && !P.complete ? 'current' : passed && k < P.cur ? 'missed' : 'upcoming' };
   });
 
@@ -63,7 +91,7 @@ export default function Today() {
       const rng = typeof a === 'string' ? `ص ${pn(String(a))}` : a === b ? `ص ${ar(a)}` : `ص ${ar(a)}–${ar(b as number)}`;
       const n = Math.max(1, Math.round(sum(pgs)));
       const sub = part === 'salawat' ? `من صلوات جليلة، ${rng}` : part === 'quran' ? `ورد القرآن، ${rng}` : `${rng}، ${PG(n)}`;
-      const inNow = !P.complete && P.portion.some((x) => x.item === idx);
+      const inNow = isToday && !P.complete && P.portion.some((x) => x.item === idx);
       const st = read.length === pgs.length && pgs.length ? 'done' : read.length ? 'some' : inNow ? 'now' : 'none';
       return { idx, ttl, sub, st, label: st === 'done' ? 'تمّ' : st === 'some' ? `${ar(read.length)} من ${ar(pgs.length)}` : st === 'now' ? 'الآن' : 'لم يبدأ',
         firstUnread: P.pages.findIndex((x) => x.item === idx && !ds[x.id]), firstAny: P.pages.findIndex((x) => x.item === idx) };
@@ -80,8 +108,16 @@ export default function Today() {
         {/* header */}
         <Animated.View entering={FadeInDown.duration(500)} style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <View style={{ flex: 1 }}>
-            <Txt v="label">{dateLine}</Txt>
-            <Txt v="display">{`ورد ${P.dayName}`}</Txt>
+            <Txt v="label">{offset === 0 ? dateLine : `${offset === -1 ? 'أمس' : offset === 1 ? 'غدًا' : offset < 0 ? 'يوم سابق' : 'يوم قادم'}، ${dateLine}`}</Txt>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Pressable onPress={() => shiftDay(-1)} disabled={offset <= -7} hitSlop={10} accessibilityRole="button" accessibilityLabel="اليوم السابق" style={{ opacity: offset <= -7 ? 0.3 : 1 }}>
+                <ChevronIcon dir="right" size={22} color={p.gold} />
+              </Pressable>
+              <Txt v="display" style={{ flexShrink: 1 }} numberOfLines={1} adjustsFontSizeToFit>{`ورد ${P.dayName}`}</Txt>
+              <Pressable onPress={() => shiftDay(1)} disabled={offset >= 6} hitSlop={10} accessibilityRole="button" accessibilityLabel="اليوم التالي" style={{ opacity: offset >= 6 ? 0.3 : 1 }}>
+                <ChevronIcon size={22} color={p.gold} />
+              </Pressable>
+            </View>
           </View>
           {city ? (
             <Pressable onPress={() => { tap(); router.push('/city'); }} accessibilityRole="button" accessibilityLabel={`المدينة: ${city}`}
@@ -92,6 +128,12 @@ export default function Today() {
           ) : null}
         </Animated.View>
 
+        {!isToday ? (
+          <Pressable onPress={() => { tap(); setViewDay(null); }} accessibilityRole="button"
+            style={{ marginTop: 10, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, height: 36, borderRadius: 18, backgroundColor: p.turqSoft, borderWidth: 1, borderColor: p.turq }}>
+            <Text style={{ fontFamily: F.uiBold, fontSize: 13.5, color: p.turqHi }}>العودة إلى اليوم</Text>
+          </Pressable>
+        ) : null}
         <WebNotice />
         {update ? (
           <Pressable onPress={() => { tap(); Linking.openURL(update.url); }} accessibilityRole="button" accessibilityLabel="تحديث التطبيق"
@@ -142,7 +184,8 @@ export default function Today() {
         {/* the day's horizon */}
         {P.pages.length > 0 && (
           <Animated.View entering={FadeInDown.delay(180).duration(600)} style={{ marginTop: 32 }}>
-            <PrayerPath orbs={orbs} width={W} />
+            <PrayerPath orbs={orbs} width={W} onPress={openSitting} />
+            <Txt v="label" align="center" style={{ marginTop: 2 }}>اضغط أي صلاة لقراءة جلستها، ولو فاتت.</Txt>
           </Animated.View>
         )}
 

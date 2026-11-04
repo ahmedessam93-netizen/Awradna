@@ -3,7 +3,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
-import { DailyDay, DayState, normalize, plan, State } from './plan';
+import { DailyDay, DayState, normalize, plan, planForDay, State } from './plan';
 import { refreshReminders } from './notify';
 import { refreshWidgets } from './widgets';
 
@@ -40,6 +40,8 @@ type Ctx = {
   resetDay: (dayKey: string) => void;
   replaceAll: (s: State) => void;
   updateDaily: (dayKey: string, fn: (d: DailyDay) => DailyDay) => void;
+  viewDay: string | null;
+  setViewDay: (key: string | null) => void;
 };
 
 const StoreContext = createContext<Ctx | null>(null);
@@ -48,6 +50,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<State>(normalize(null));
   const [ready, setReady] = useState(false);
   const [now, setNow] = useState(new Date());
+  // the day shown on the Today screen; null = today. Opening the app always returns to today.
+  const [viewDay, setViewDay] = useState<string | null>(null);
   const latest = useRef(state);
   const sideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -75,7 +79,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const tick = setInterval(() => setNow(new Date()), 30000);
     const sub = AppState.addEventListener('change', (st) => {
-      if (st === 'active') { setNow(new Date()); scheduleSideEffects(latest.current, 500); }
+      if (st === 'active') { setNow(new Date()); setViewDay(null); scheduleSideEffects(latest.current, 500); }
     });
     return () => { clearInterval(tick); sub.remove(); };
   }, [scheduleSideEffects]);
@@ -83,7 +87,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const dayOf = (s: State, key: string): DayState => s.days[key] ? { read: { ...s.days[key].read }, done: { ...(s.days[key].done || {}) } } : { read: {}, done: {} };
 
   const api = useMemo<Ctx>(() => ({
-    state, ready, now,
+    state, ready, now, viewDay, setViewDay,
     setSettings: (patch) => {
       const s = latest.current;
       commit({ ...s, settings: { ...s.settings, ...patch, parts: { ...s.settings.parts, ...(patch.parts || {}) } } }, 400);
@@ -116,7 +120,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       latest.current = { ...s, daily: { ...s.daily, [key]: next } };
       setState(latest.current); persist(latest.current);
     },
-  }), [state, ready, now, commit]);
+  }), [state, ready, now, viewDay, commit]);
 
   return <StoreContext.Provider value={api}>{children}</StoreContext.Provider>;
 }
@@ -130,4 +134,10 @@ export function useStore() {
 export function usePlan() {
   const { state, now } = useStore();
   return useMemo(() => plan(state, now), [state, now]);
+}
+
+// The plan of the day shown on the Today screen (today, or a day the person opened).
+export function useViewPlan() {
+  const { state, now, viewDay } = useStore();
+  return useMemo(() => planForDay(state, viewDay, now), [state, now, viewDay]);
 }

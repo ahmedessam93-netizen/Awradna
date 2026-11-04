@@ -192,3 +192,25 @@ export function dailySession(s: Settings, now: Date): 'am' | 'pm' {
   const t = times(s, now);
   return t.asr && now >= t.asr ? 'pm' : (t.fajr && now < t.fajr ? 'pm' : 'am');
 }
+
+// The plan of any day: today as it stands now; a past day as at its end (whatever is left);
+// a coming day as at its start. Lets people open any day, including one they missed.
+export function planForDay(st: State, key: string | null, now: Date = new Date()): Plan {
+  const today = plan(st, now);
+  if (!key || key === today.key) return today;
+  const [y, m, d] = key.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  if (date < today.date) return plan(st, new Date(y, m - 1, d, 23, 50));
+  const f = times(st.settings, date).fajr;
+  return plan(st, new Date((f ? f.getTime() : new Date(y, m - 1, d, 5).getTime()) + 60000));
+}
+
+// The pages of one chosen sitting (k = position among the day's sittings), taken from what is
+// still unread: an even share of the day, so a missed sitting can be read at any time.
+export function sittingPortion(P: Plan, k: number): Page[] {
+  if (!P.remaining.length) return [];
+  const share = P.total / Math.max(1, P.wins.length);
+  const out: Page[] = []; let acc = 0;
+  for (const pg of P.remaining) { if (acc >= share - 1e-9 && out.length) break; out.push(pg); acc += pg.w; }
+  return out;
+}

@@ -11,7 +11,7 @@ import { Bar, GlassButton, GoldButton, IconButton, Sky, Txt, useTap } from '../c
 import { LinearGradient } from 'expo-linear-gradient';
 import { ZoomPage } from '../components/ZoomPage';
 import { PAGE_IMAGES, PAGE_SIZE } from '../core/pages';
-import { ar, cnt, fmtTime, mins, MN, Page, PG, plan, sum } from '../core/plan';
+import { ar, cnt, fmtTime, mins, MN, Page, PG, planForDay, sittingPortion, sum } from '../core/plan';
 import { useStore } from '../core/store';
 import { F, usePalette } from '../theme';
 
@@ -47,11 +47,17 @@ function Done({ title, line, primary, onPrimary, secondary, onSecondary }: { tit
 export default function Reader() {
   const p = usePalette(); const tap = useTap(); const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
-  const params = useLocalSearchParams<{ start?: string; review?: string }>();
+  const params = useLocalSearchParams<{ start?: string; review?: string; day?: string; win?: string }>();
   const { state, markRead, markSitting, completeDay, setSettings } = useStore();
 
   // Freeze the plan when the reader opens, so the sitting doesn't shift under the reader's fingers.
-  const P = useMemo(() => plan(state, new Date()), []); // eslint-disable-line react-hooks/exhaustive-deps
+  // A chosen day (any day can be opened) and, optionally, a chosen sitting (even a missed one).
+  const P = useMemo(() => {
+    const base = planForDay(state, params.day || null, new Date());
+    if (params.win == null || params.review === '1') return base;
+    const k = Math.max(0, Math.min(base.wins.length - 1, Number(params.win)));
+    return { ...base, portion: sittingPortion(base, k), nextIdx: k, curDone: false };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const review = params.review === '1';
   const start = Math.max(0, Math.min(Number(params.start || 0), Math.max(0, P.pages.length - 1)));
   const seq = useMemo(() => P.pages.slice(start), [P, start]);
@@ -102,7 +108,8 @@ export default function Reader() {
   const tint = p.pageInk;
 
   const nextLabel = cur.kind === 'page' && stopAfter >= 0 && cur.n === stopAfter ? 'إتمام الجلسة' : cur.kind === 'page' && cur.n === seq.length - 1 ? 'إنهاء الورد' : 'التالية';
-  const title = review ? `مراجعة ورد ${P.dayName}` : P.complete ? `ورد ${P.dayName}` : `جلسة ${w?.name ?? ''}`;
+  const otherDay = !!params.day && params.day !== planForDay(state, null, new Date()).key;
+  const title = review ? `مراجعة ورد ${P.dayName}` : P.complete || (otherDay && params.win == null) ? `ورد ${P.dayName}` : `جلسة ${w?.name ?? ''}`;
 
   // after the sitting: what is left today
   const afterLeft = seq.slice(stopAfter + 1); const lw = sum(afterLeft); const after = P.wins.length - P.nextIdx - 1;
