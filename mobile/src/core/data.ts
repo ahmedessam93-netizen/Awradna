@@ -12,16 +12,20 @@ export const PART_ORDER = ['dalail', 'mughnam', 'kunuz', 'salawat', 'ahzab', 'qu
 // the day's surah, printed in the book right after كنوز الأسرار
 export const SURAH: Record<number, string> = { 1: 'يس', 2: 'طه', 3: 'مريم', 4: 'الكهف', 5: 'الدخان', 6: 'النور', 0: 'الرحمن' };
 
-export type Item = [string, string, number | string, number | string];
+// [part, title, first, last] for a run of whole pages, or [part, title, [page ids]] for an explicit list
+// (pieces such as '279a' are parts of a page cut at a clean break; see scripts/make_pieces.py).
+export type Item = [string, string, number | string, number | string] | [string, string, string[]];
 export const DAYS: Record<number, { key: string; name: string; items: Item[] }> = {
   1: { key: 'mon', name: 'الإثنين', items: [
     ['dalail',  'ورد دلائل الخيرات: الافتتاح والحزب الأول', 27, 45],
-    ['dalail',  'دعاء مرجوّ الإجابة بعد الصلاة على النبي ﷺ', 46, 47],
+    ['dalail',  'دعاء مرجوّ الإجابة بعد الصلاة على النبي صلى الله عليه وآله وسلم', 46, 47],
     ['mughnam', 'حزب يوم الإثنين من خلاصة المغنم', 48, 50],
     ['ahzab',   'حزب النصر واعتصامه', 51, 54],
     ['kunuz',   'ورد كنوز الأسرار وصلاة الفاتح', 55, 61],
     ['quran',   'سورة يس', 62, 65],
     ['salawat', 'الصلاة الإبراهيمية والصلاة التفريجية (النارية)', '273a', '273a'],
+    ['salawat', 'الصلاة الممزوجة على الصلاة المشيشية (١ من ٧)', ['275', '276a']],
+    ['salawat', 'صلوات أخرى مختارة: ١–٧', ['285']],
   ]},
   2: { key: 'tue', name: 'الثلاثاء', items: [
     ['dalail',  'ورد دلائل الخيرات: الحزب الثاني', 69, 76],
@@ -30,6 +34,8 @@ export const DAYS: Record<number, { key: string; name: string; items: Item[] }> 
     ['kunuz',   'ورد كنوز الأسرار والصلاة النارية', 90, 96],
     ['quran',   'سورة طه', 97, 103],
     ['salawat', 'صلاة الفاتح وصلاة الشفاء', '273b', '273b'],
+    ['salawat', 'الصلاة الممزوجة على الصلاة المشيشية (٢ من ٧)', ['276b', '277', '278', '279a']],
+    ['salawat', 'صلوات أخرى مختارة: ٨–١٤', ['286a']],
   ]},
   3: { key: 'wed', name: 'الأربعاء', items: [
     ['dalail',  'ورد دلائل الخيرات: الحزب الثالث', 107, 115],
@@ -38,6 +44,8 @@ export const DAYS: Record<number, { key: string; name: string; items: Item[] }> 
     ['kunuz',   'ورد كنوز الأسرار وصلاة النور', 121, 127],
     ['quran',   'سورة مريم', 128, 132],
     ['salawat', 'الصلاة المُنجّية', 274, 274],
+    ['salawat', 'الصلاة الممزوجة على الصلاة المشيشية (٣ من ٧)', ['279b', '280a']],
+    ['salawat', 'صلوات أخرى مختارة: ١٥–٢١', ['286b', '287a']],
   ]},
   4: { key: 'thu', name: 'الخميس', items: [
     ['dalail',  'ورد دلائل الخيرات: الحزب الرابع', 135, 143],
@@ -45,7 +53,8 @@ export const DAYS: Record<number, { key: string; name: string; items: Item[] }> 
     ['ahzab',   'حزب اللطف', 147, 151],
     ['kunuz',   'ورد كنوز الأسرار وصلاة جليلة', 152, 158],
     ['quran',   'سورة الكهف', 159, 167],
-    ['salawat', 'الصلاة الممزوجة على الصلاة المشيشية (١)', 275, 279],
+    ['salawat', 'الصلاة الممزوجة على الصلاة المشيشية (٤ من ٧)', ['280b', '281a']],
+    ['salawat', 'صلوات أخرى مختارة: ٢٢–٢٧', ['287b', '288']],
   ]},
   5: { key: 'fri', name: 'الجمعة', items: [
     ['dalail',  'ورد دلائل الخيرات: الحزب الخامس', 171, 182],
@@ -53,7 +62,8 @@ export const DAYS: Record<number, { key: string; name: string; items: Item[] }> 
     ['ahzab',   'حزب الحفظ', 187, 191],
     ['kunuz',   'ورد كنوز الأسرار وصلاة جليلة', 192, 199],
     ['quran',   'سورة الدخان', 200, 202],
-    ['salawat', 'الصلاة الممزوجة على الصلاة المشيشية (٢)', 280, 284],
+    ['salawat', 'الصلاة الممزوجة على الصلاة المشيشية (٥ من ٧)', ['281b', '282a']],
+    ['salawat', 'صلوات أخرى مختارة: ٢٨–٣٣', ['289']],
   ]},
   6: { key: 'sat', name: 'السبت', items: [
     ['dalail',  'ورد دلائل الخيرات: الحزب السادس', 205, 216],
@@ -61,7 +71,8 @@ export const DAYS: Record<number, { key: string; name: string; items: Item[] }> 
     ['ahzab',   'حزب النجاة', 220, 220],
     ['kunuz',   'ورد كنوز الأسرار وصلاة جليلة', 221, 227],
     ['quran',   'سورة النور', 228, 234],
-    ['salawat', 'صلوات أخرى مختارة (١)', 285, 288],
+    ['salawat', 'الصلاة الممزوجة على الصلاة المشيشية (٦ من ٧)', ['282b']],
+    ['salawat', 'صلوات أخرى مختارة: ٣٤–٣٩', ['290', '291a']],
   ]},
   0: { key: 'sun', name: 'الأحد', items: [
     ['dalail',  'ورد دلائل الخيرات: الحزب السابع', 237, 247],
@@ -70,11 +81,16 @@ export const DAYS: Record<number, { key: string; name: string; items: Item[] }> 
     ['ahzab',   'حزب الكفاية', 256, 259],
     ['kunuz',   'ورد كنوز الأسرار', 260, 266],
     ['quran',   'سورة الرحمن', 267, 269],
-    ['salawat', 'صلوات أخرى مختارة (٢)', 289, 292],
+    ['salawat', 'الصلاة الممزوجة على الصلاة المشيشية (٧ من ٧، الختام)', ['282c', '283', '284']],
+    ['salawat', 'صلوات أخرى مختارة: ٤٠–٤٥', ['291b', '292']],
   ]},
 };
-// pages that are half a page of text
-export const HALF: Record<string, number> = { '273a': 1, '273b': 1, '274': 1 };
+// How much of a full page each piece (or short page) holds, for reading-time estimates.
+export const PAGE_W: Record<string, number> = {
+  '273a': 0.47, '273b': 0.53, '274': 0.5, '284': 0.3,
+  '276a': 0.62, '276b': 0.38, '279a': 0.62, '279b': 0.38, '280a': 0.64, '280b': 0.36, '281a': 0.57, '281b': 0.43,
+  '282a': 0.26, '282b': 0.3, '282c': 0.44, '286a': 0.73, '286b': 0.27, '287a': 0.77, '287b': 0.23, '291a': 0.36, '291b': 0.64,
+};
 export const MIN_PER_PAGE = 1.6;
 
 // Cities. [name, lat, lng, method]. Egypt first (most readers), then the Gulf, then others.

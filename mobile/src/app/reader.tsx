@@ -18,7 +18,7 @@ import { useStore } from '../core/store';
 import { F, usePalette } from '../theme';
 
 function KeepAwake() { useKeepAwake(); return null; }
-const pn = (id: string) => ar(id.replace(/[ab]$/, ''));
+const pn = (id: string) => ar(id.replace(/[a-c]$/, ''));
 const ZOOMS = [1, 1.25, 1.5];
 
 type Item = { kind: 'page'; it: RItem } | { kind: 'stop'; k: number } | { kind: 'fin' };

@@ -1,6 +1,6 @@
 // Web version only: helps people add Awradna to the Home Screen and turn on notifications.
 import React, { useEffect, useState } from 'react';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Linking, Platform, Pressable, Text, View } from 'react-native';
 import { needsHomeScreen, notificationPermission, pushSupported, refreshReminders, sendTest } from '../core/notify';
 import { useStore } from '../core/store';
 import { F, usePalette } from '../theme';
@@ -29,7 +29,20 @@ export function WebNotice() {
       </View>
     );
   }
-  if (!pushSupported() || granted || state.settings.notif === false) return null;
+  // Android browsers: the real app is a tap away
+  const android = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+  const appBanner = android ? (
+    <Pressable accessibilityRole="link" onPress={() => { tap(); Linking.openURL('/android/'); }} style={box}>
+      <BellIcon size={22} color={p.turqHi} />
+      <View style={{ flex: 1 }}>
+        <Txt v="h3" style={{ fontSize: 15 }}>تطبيق أورادنا لأندرويد</Txt>
+        <Txt v="label">مع الإشعارات والويدجت على الشاشة الرئيسية.</Txt>
+      </View>
+      <Text style={{ fontFamily: F.uiBold, fontSize: 14, color: p.turqHi }}>تحميل</Text>
+    </Pressable>
+  ) : null;
+  if (!pushSupported() || granted || state.settings.notif === false) return appBanner;
+  if (appBanner) return appBanner;
   return (
     <Pressable accessibilityRole="button" onPress={async () => {
       tap(); setBusy(true);

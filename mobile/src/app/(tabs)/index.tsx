@@ -22,7 +22,7 @@ const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'ماي�
 function hijri(d: Date) {
   try { return new Intl.DateTimeFormat('ar-EG-u-ca-islamic-umalqura-nu-arab', { day: 'numeric', month: 'long', year: 'numeric' }).format(d).replace(/\s?هـ$/, ''); } catch { return ''; }
 }
-const pn = (id: string) => ar(id.replace(/[ab]$/, ''));
+const pn = (id: string) => ar(id.replace(/[a-c]$/, ''));
 
 export default function Today() {
   const p = usePalette(); const P = useViewPlan(); const { state, now, viewDay, setViewDay } = useStore(); const tap = useTap();
@@ -88,7 +88,8 @@ export default function Today() {
     return DAYS[P.wd].items.map((it, idx) => {
       const [part, ttl, a, b] = it; if (!state.settings.parts[part]) return null;
       const pgs = P.pages.filter((x) => x.item === idx); const read = pgs.filter((x) => readFrac(ds, x.id) >= 1);
-      const rng = typeof a === 'string' ? `ص ${pn(String(a))}` : a === b ? `ص ${ar(a)}` : `ص ${ar(a)}–${ar(b as number)}`;
+      const first = pgs[0]?.id ?? String(a), last = pgs[pgs.length - 1]?.id ?? first;
+      const rng = pn(first) === pn(last) ? `ص ${pn(first)}` : `ص ${pn(first)}–${pn(last)}`;
       const n = Math.max(1, Math.round(sum(pgs)));
       const sub = part === 'salawat' ? `من صلوات جليلة، ${rng}` : part === 'quran' ? `ورد القرآن، ${rng}` : `${rng}، ${PG(n)}`;
       const inNow = isToday && !P.complete && P.portion.some((x) => x.item === idx);

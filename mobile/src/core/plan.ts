@@ -1,6 +1,6 @@
 // The reading plan, computed from saved state at any moment. Mirrors app/src/app.js plan()
 // so the web screen, notifications and widgets always agree.
-import { DAYS, HALF, MIN_PER_PAGE } from './data';
+import { DAYS, PAGE_W, MIN_PER_PAGE } from './data';
 import PT from './prayer';
 import { phraseAt, SHORT_MAX } from './phrases';
 import { itemRead, readFrac, segmentsFor, Segments } from './sittings';
@@ -82,14 +82,14 @@ export function dayPages(s: Settings, weekday: number): Page[] {
   DAYS[weekday].items.forEach((it, idx) => {
     const [part, title, a, b] = it;
     if (!s.parts[part]) return;
-    if (typeof a === 'string') { out.push({ id: a, part, title, item: idx, w: HALF[a] ? 0.5 : 1 }); return; }
-    for (let p = a; p <= (b as number); p++) out.push({ id: String(p), part, title, item: idx, w: HALF[String(p)] ? 0.5 : 1 });
+    const ids = Array.isArray(a) ? a : typeof a === 'string' ? [a] : Array.from({ length: (b as number) - a + 1 }, (_, k) => String(a + k));
+    ids.forEach((id) => out.push({ id, part, title, item: idx, w: PAGE_W[id] ?? 1 }));
   });
   return out;
 }
 export const sum = (a: Page[]) => a.reduce((x, p) => x + p.w, 0);
 export const mins = (w: number) => Math.max(1, Math.round(w * MIN_PER_PAGE));
-const pnum = (id: string) => id.replace(/[ab]$/, '');
+const pnum = (id: string) => id.replace(/[a-c]$/, '');
 
 export type Plan = {
   date: Date; key: string; wd: number; dayName: string; pages: Page[]; remaining: Page[];
