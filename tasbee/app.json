@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "قرآن (تسبيع)",
-    "slug": "tasbee",
+    "slug": "ahmed-essam",
     "scheme": "tasbee",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -131,7 +131,11 @@
     "experiments": {
       "typedRoutes": false
     },
-    "extra": {},
+    "extra": {
+      "eas": {
+        "projectId": "f4abe883-2138-45dd-a1c9-d6dd0295d6b6"
+      }
+    },
     "owner": "ahmedessam287s-team"
   }
 }
