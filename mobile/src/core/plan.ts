@@ -104,13 +104,16 @@ export function plan(st: State, now: Date = new Date()): Plan {
   const wins = windowsFor(s, date);
   let cur = 0; wins.forEach((w, i) => { if (w.time && w.time <= now) cur = i; });
   const curDone = !!done[wins[cur].i];
-  const nextIdx = curDone ? Math.min(cur + 1, wins.length - 1) : cur;
-  const remWin = Math.max(1, wins.length - nextIdx);
+  // The sitting to read next: the first one from now on that isn't done yet (reading ahead
+  // moves it forward, one sitting at a time). If all are done, the last one takes what is left.
+  let nextIdx = wins.findIndex((w, k) => k >= cur && !done[w.i]);
+  if (nextIdx < 0) nextIdx = wins.length - 1;
+  const remWin = Math.max(1, wins.filter((w, k) => k >= nextIdx && !done[w.i]).length);
   const total = sum(pages), left = sum(remaining), readW = total - left;
   const share = (s.fajrHeavy && nextIdx === 0 && readW === 0 && wins.length >= 4) ? total * 0.4 : left / remWin;
   const portion: Page[] = []; let acc = 0;
   for (const p of remaining) { if (acc >= share - 1e-9 && portion.length) break; portion.push(p); acc += p.w; }
-  if (nextIdx === wins.length - 1 || remWin === 1) { portion.length = 0; portion.push(...remaining); }
+  if (remWin === 1) { portion.length = 0; portion.push(...remaining); }
   return { date, key, wd, dayName: DAYS[wd].name, pages, remaining, wins, cur, curDone, nextIdx, total, left, readW, portion, complete: remaining.length === 0 && pages.length > 0 };
 }
 
