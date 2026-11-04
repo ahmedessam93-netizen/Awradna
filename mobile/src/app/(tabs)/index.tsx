@@ -37,7 +37,6 @@ export default function Today() {
   const w = P.wins[P.nextIdx];
   const isLast = P.nextIdx === P.wins.length - 1;
   const first = P.portion[0], last = P.portion[P.portion.length - 1];
-  const range = !first ? '' : first === last ? `ص ${pn(first.id)}` : `من ص ${pn(first.id)} إلى ص ${pn(last.id)}`;
   const startAt = P.remaining.length ? P.pages.indexOf(P.remaining[0]) : 0;
   const open = (start: number, review = false, win?: number) => {
     tap('medium');
@@ -58,22 +57,24 @@ export default function Today() {
   const [ty, tm, td] = todayKey.split('-').map(Number);
   const offset = Math.round((+new Date(P.date) - +new Date(ty, tm - 1, td)) / 864e5);
 
-  // what the hero says
+  // what the hero says. The sittings are only a guide: reading always continues from where
+  // the person stopped, and each day starts from the beginning of its wird.
+  const contLabel = P.readW > 0 && P.remaining[0] ? `تابع من ص ${pn(P.remaining[0].id)}` : `ابدأ من أول ورد ${P.dayName}`;
   let eyebrow = '', title = '', line = '', cta = '', secondary = false, eyeTone: 'now' | 'done' | 'plain' = 'now';
   if (P.pages.length && !isToday && !P.complete) {
     eyebrow = isPast ? (P.readW > 0 ? 'يوم سابق لم يكتمل' : 'يوم سابق') : 'يوم قادم';
     title = isPast ? (P.readW > 0 ? `ما بقي من ورد ${P.dayName}` : `ورد ${P.dayName}`) : `ورد ${P.dayName}`;
     line = isPast ? `${PG(P.left)}، اقرأها متى شئت.` : `${PG(P.total)}، يبدأ بعد فجر ذلك اليوم. يمكنك قراءته الآن إن شئت.`;
-    cta = P.readW > 0 ? 'تابع القراءة' : `اقرأ ورد ${P.dayName}`; eyeTone = 'plain';
+    cta = contLabel; eyeTone = 'plain';
   } else if (!P.pages.length) { eyebrow = 'لا شيء مختار'; title = 'اختر أجزاء الورد'; line = 'كل الأجزاء مُعطّلة في الإعدادات.'; eyeTone = 'plain'; }
   else if (P.complete) { eyebrow = 'اكتمل الورد'; title = `تمّ ورد ${P.dayName}`; line = isToday ? 'تقبّل الله. ورد الغد يبدأ بعد الفجر.' : 'تقبّل الله.'; eyeTone = 'done'; }
-  else if (P.curDone && P.nextIdx > P.cur) { eyebrow = `أتممت جلسة ${P.wins[P.cur].name}`; title = `القادمة: جلسة ${w.name}`; line = `بعد صلاة ${w.name}، ${fmtTime(w.time)}`; cta = 'اقرأ الآن على أي حال'; secondary = true; eyeTone = 'done'; }
-  else if (P.curDone && isLast) { eyebrow = `أتممت جلسة ${w.name}`; title = 'ما بقي من ورد اليوم'; line = `${PG(P.left)}، اقرأها متى تيسّر قبل النوم.`; cta = 'تابع القراءة'; eyeTone = 'done'; }
+  else if (P.curDone && P.nextIdx > P.cur) { eyebrow = `أتممت جلسة ${P.wins[P.cur].name}`; title = `القادمة: جلسة ${w.name}`; line = `بعد صلاة ${w.name}، ${fmtTime(w.time)}`; cta = contLabel; secondary = true; eyeTone = 'done'; }
+  else if (P.curDone && isLast) { eyebrow = `أتممت جلسة ${w.name}`; title = 'ما بقي من ورد اليوم'; line = `${PG(P.left)}، اقرأها متى تيسّر قبل النوم.`; cta = contLabel; eyeTone = 'done'; }
   else {
     eyebrow = `الآن، بعد صلاة ${w.name}`;
     title = isLast ? `جلسة ${w.name}، الأخيرة` : `جلسة ${w.name}`;
-    line = `${PG(portionW)}، نحو ${MN(mins(portionW))}، ${range}`;
-    cta = `ابدأ جلسة ${w.name}`;
+    line = `المقترح الآن: ${PG(portionW)}، نحو ${MN(mins(portionW))}`;
+    cta = contLabel;
   }
 
   const orbs: Orb[] = P.wins.map((x, k) => {
@@ -178,6 +179,7 @@ export default function Today() {
             {cta && !secondary ? <GoldButton label={cta} icon={<BookIcon size={22} color={p.onPrimary} />} onPress={() => open(startAt)} /> : null}
             {cta && secondary ? <GlassButton label={cta} tone="gold" onPress={() => open(startAt)} /> : null}
             {P.complete ? <GlassButton label="مراجعة ما قرأت" tone="gold" onPress={() => open(0, true)} /> : null}
+            {!P.complete && P.pages.length ? <Txt v="label" align="center" style={{ marginTop: 2 }}>الجلسات للتيسير فقط. اقرأ الورد دفعة واحدة أو على مهلك، والتطبيق يحفظ موضعك.</Txt> : null}
           </View>
         </Animated.View>
 

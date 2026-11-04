@@ -114,7 +114,7 @@ export default function Reader() {
   // after the sitting: what is left today
   const afterLeft = seq.slice(stopAfter + 1); const lw = sum(afterLeft); const after = P.wins.length - P.nextIdx - 1;
   const nextWin = P.wins[P.nextIdx + 1];
-  const stopLine = `بقيت ${PG(Math.round(lw))} من ورد اليوم${after > 0 ? `، على ${cnt(after, 'جلسة قادمة', 'جلستين قادمتين', 'جلسات قادمة')}` : ''}.${nextWin ? ` التالية بعد ${nextWin.name}، ${fmtTime(nextWin.time)}.` : ''}`;
+  const stopLine = `بقيت ${PG(Math.round(lw))} من ورد اليوم${after > 0 ? `، على ${cnt(after, 'جلسة قادمة', 'جلستين قادمتين', 'جلسات قادمة')}` : ''}.${nextWin ? ` التالية بعد ${nextWin.name}، ${fmtTime(nextWin.time)}.` : ''} ولك أن تكمل الآن، فالجلسات للتيسير فقط.`;
   const marks = group.length <= 14;
 
   return (
