@@ -2,7 +2,9 @@
 // On open the beads light one by one; the current beads breathe softly.
 // `states` lets the tasbih counter drive every bead directly.
 import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
+
+const WEB = Platform.OS === 'web';
 import Animated, { Easing, Extrapolation, interpolate, SharedValue, useAnimatedProps, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import Svg, { Circle, Defs, Ellipse, G, Line, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { AMBER, beadLayout, BeadState, BEAD_COUNT, TURQ } from '../core/beads';
@@ -37,14 +39,15 @@ export function Misbaha({ size, readFrac = 0, nowFrac = 0, complete, states, chi
   const p = usePalette();
   const { beads, head, R, cx, cy, r } = beadLayout(size, complete ? 1 : readFrac, complete ? 0 : nowFrac, states);
   const k = size / 342;
-  const reveal = useSharedValue(states ? 1 : 0);
+  const reveal = useSharedValue(states || WEB ? 1 : 0);
   const breath = useSharedValue(0);
   useEffect(() => {
-    if (states) return;
+    if (states || WEB) return;
     reveal.value = 0;
     reveal.value = withDelay(120, withTiming(1, { duration: 1100, easing: Easing.out(Easing.cubic) }));
   }, [readFrac, nowFrac, complete, animateKey]);
   useEffect(() => {
+    if (WEB) return; // a breathing loop re-draws every bead each frame in a browser
     breath.value = withRepeat(withSequence(withTiming(1, { duration: 1700, easing: Easing.inOut(Easing.sin) }), withTiming(0, { duration: 1700, easing: Easing.inOut(Easing.sin) })), -1);
   }, []);
   const restStroke = p.dark ? 'rgba(226,188,106,0.35)' : 'rgba(138,100,32,0.35)';

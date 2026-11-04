@@ -8,6 +8,9 @@ import Svg, { Defs, Ellipse, LinearGradient as SvgLinear, Mask, Path, Pattern, R
 import { useStore } from '../core/store';
 import { F, Palette, usePalette } from '../theme';
 
+// The web version runs on phones' browsers: keep it light (no endless animations).
+const WEB = Platform.OS === 'web';
+
 // ---------- haptics ----------
 export function useTap() {
   const { state } = useStore();
@@ -83,10 +86,12 @@ export function Sky({ glowAt = 0 }: { glowAt?: number }) {
             <Rect x={27} y={27} width={24} height={24} fill="none" stroke={p.lattice} strokeOpacity={0.05} strokeWidth={1} transform="rotate(45 39 39)" />
           </Pattern>
         </Defs>
-        <Rect width={width} height={height} fill="url(#khatam)" mask="url(#fadeMask)" />
+        {WEB
+          ? <Rect width={width} height={height * 0.5} fill="url(#khatam)" opacity={0.7} />
+          : <Rect width={width} height={height} fill="url(#khatam)" mask="url(#fadeMask)" />}
         <Ellipse cx={width / 2} cy={glowAt} rx={width * 0.95} ry={height * 0.46} fill="url(#lamp)" />
       </Svg>
-      {p.dark && stars.map((s, i) => (i % 3 === 0
+      {p.dark && stars.map((s, i) => (i % 3 === 0 && !WEB
         ? <Twinkle key={i} x={s.x} y={s.y} r={s.s} delay={s.d} color={p.star} />
         : <View key={i} style={{ position: 'absolute', left: s.x - s.s, top: s.y - s.s, width: s.s * 2, height: s.s * 2, borderRadius: s.s, backgroundColor: p.star, opacity: s.o }} />))}
     </View>
