@@ -61,13 +61,15 @@ export default function Reader() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const review = params.review === '1';
   const start = Math.max(0, Math.min(Number(params.start || 0), Math.max(0, P.pages.length - 1)));
-  const seq = useMemo(() => P.pages.slice(start), [P, start]);
+  // the whole day is in the reader, so you can always go back; it opens at your place
+  const seq = P.pages;
+  const startN = start;
   // Step by step: the reading stops after each sitting's share. The first stop ends the sitting
   // being read; the rest of the day is divided evenly over the sittings still to come.
   const stops = useMemo(() => {
     const out: { after: number; k: number }[] = [];
     if (review || !P.portion.length) return out;
-    const first = seq.findIndex((x) => x.id === P.portion[P.portion.length - 1].id);
+    const first = seq.findIndex((x, i) => i >= startN && x.id === P.portion[P.portion.length - 1].id);
     if (first < 0 || first >= seq.length - 1) return out;
     out.push({ after: first, k: P.nextIdx });
     const done = state.days[P.key]?.done || {};
@@ -83,7 +85,7 @@ export default function Reader() {
       }
     }
     return out;
-  }, [P, seq, review]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [P, seq, review, startN]); // eslint-disable-line react-hooks/exhaustive-deps
   const items: Item[] = useMemo(() => {
     const out: Item[] = [];
     seq.forEach((pg, i) => { out.push({ kind: 'page', page: pg, n: i }); const st = stops.find((x) => x.after === i); if (st) out.push({ kind: 'stop', k: st.k, after: i }); });
@@ -93,8 +95,9 @@ export default function Reader() {
 
   const pager = useRef<PagerHandle>(null);
   // load the coming pages ahead, so turning a page never waits
-  useEffect(() => { prefetchPages(seq.slice(0, 16).map((x) => PAGE_IMAGES[x.id])); }, [seq]);
-  const [idx, setIdx] = useState(0); const idxRef = useRef(0);
+  useEffect(() => { prefetchPages(seq.slice(Math.max(0, startN - 2), startN + 16).map((x) => PAGE_IMAGES[x.id])); }, [seq]);
+  const startItem = Math.max(0, items.findIndex((it) => it.kind === 'page' && it.n === startN));
+  const [idx, setIdx] = useState(startItem); const idxRef = useRef(startItem);
   const zoom = state.settings.pageZoom || 1;
   const [zoomed, setZoomed] = useState(zoom > 1);
   const chrome = useSharedValue(1);
@@ -106,15 +109,17 @@ export default function Reader() {
   // the sitting the current page belongs to
   const segIdx = cur.kind === 'page' ? stops.findIndex((x) => cur.n <= x.after) : cur.kind === 'stop' ? stops.findIndex((x) => x.after === cur.after) : -1;
   const seg = segIdx >= 0 ? stops[segIdx] : null;
-  const segStart = segIdx > 0 ? stops[segIdx - 1].after + 1 : seg ? 0 : stops.length ? stops[stops.length - 1].after + 1 : 0;
-  const segEnd = seg ? seg.after : seq.length - 1;
+  const before = cur.kind === 'page' && cur.n < startN; // a page before where you opened
+  const segStart = before ? 0 : segIdx > 0 ? stops[segIdx - 1].after + 1 : seg ? startN : stops.length ? stops[stops.length - 1].after + 1 : startN;
+  const segEnd = before ? startN - 1 : seg ? seg.after : seq.length - 1;
   const lastK = (() => { const done = state.days[P.key]?.done || {}; const used = new Set(stops.map((x) => x.k)); const rest = P.wins.map((w, k) => k).filter((k) => k >= P.nextIdx && !used.has(k) && !done[P.wins[k].i]); return rest.length ? rest[rest.length - 1] : P.nextIdx; })();
   const w = P.wins[seg ? seg.k : stops.length ? lastK : P.nextIdx];
   const onSelected = (i: number) => {
     setIdx(i); idxRef.current = i; tap();
     setZoomed(items[i].kind === 'page' && zoom > 1);
     const ids: string[] = [];
-    for (let j = 0; j < i; j++) { const it = items[j]; if (it.kind === 'page') ids.push(it.page.id); }
+    // only the pages you have moved past since opening count as read (going back changes nothing)
+    for (let j = startItem; j < i; j++) { const it = items[j]; if (it.kind === 'page') ids.push(it.page.id); }
     // save after the page has turned, so saving never delays the turn
     if (!review && ids.length) setTimeout(() => markRead(P.key, ids), 400);
     const it = items[i];
@@ -123,6 +128,7 @@ export default function Reader() {
     if (!chromeOn) { chrome.value = withTiming(1); setChromeOn(true); }
   };
   const next = () => pager.current?.setPage(Math.min(idx + 1, items.length - 1));
+  const prev = () => pager.current?.setPage(Math.max(idx - 1, 0));
   const cycleZoom = () => { const k = ZOOMS.indexOf(zoom); setSettings({ pageZoom: ZOOMS[(k + 1) % ZOOMS.length] }); };
 
   const group = seq.slice(segStart, segEnd + 1);
@@ -144,12 +150,12 @@ export default function Reader() {
     const line = `بقيت ${PG(Math.round(lw))} من ورد اليوم. التالية جلسة ${nw.name}${nw.time ? `، بعد ${nw.name} ${fmtTime(nw.time)}` : ''}. ولك أن تكملها الآن، فالجلسات للتيسير فقط.`;
     return { title: `أتممتَ جلسة ${P.wins[st.k].name}`, line, cont: `أكمل: جلسة ${nw.name}` };
   };
-  const marks = group.length <= 14;
+  const marks = !before && group.length <= 14;
 
   return (
     <View style={{ flex: 1, backgroundColor: p.pageBg }}>
       {state.settings.wake !== false && <KeepAwake />}
-      <Pager ref={pager} style={{ flex: 1 }} scrollEnabled={!zoomed} onPageSelected={onSelected}>
+      <Pager ref={pager} style={{ flex: 1 }} initialPage={startItem} scrollEnabled={!zoomed} onPageSelected={onSelected}>
         {items.map((it, i) => {
           if (it.kind === 'page') {
             const id = it.page.id; const [pw, ph] = PAGE_SIZE[id] || [1110, 1768];
@@ -199,8 +205,12 @@ export default function Reader() {
       {cur.kind === 'page' && (
         <Animated.View pointerEvents={chromeOn ? 'box-none' : 'none'} style={[{ position: 'absolute', bottom: insets.bottom + 14, left: 16, right: 16 }, chromeSt]}>
           <Bar radius={24}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
-              <View style={{ flex: 1, paddingStart: 6, gap: 4 }} accessible accessibilityLabel={`الصفحة ${ar(pos + 1)} من ${ar(group.length)}`}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12 }}>
+              <Pressable onPress={() => { tap(); prev(); }} disabled={idx === 0} accessibilityRole="button" accessibilityLabel="الصفحة السابقة" hitSlop={6}
+                style={({ pressed }) => ({ width: 48, height: 52, borderRadius: 17, alignItems: 'center', justifyContent: 'center', opacity: idx === 0 ? 0.35 : pressed ? 0.7 : 1, backgroundColor: p.chip, borderWidth: 1, borderColor: p.chipBorder })}>
+                <ChevronIcon dir="right" size={20} color={p.ink} strokeWidth={2.2} />
+              </Pressable>
+              <View style={{ flex: 1, paddingStart: 2, gap: 4 }} accessible accessibilityLabel={`الصفحة ${ar(pos + 1)} من ${ar(group.length)}`}>
                 {marks ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
                     {group.map((g, k) => (
@@ -209,7 +219,7 @@ export default function Reader() {
                   </View>
                 ) : null}
                 <Text maxFontSizeMultiplier={1.2} style={{ fontFamily: F.ui, fontSize: 12.5, lineHeight: 18, color: p.muted, textAlign: 'right' }}>
-                  {`صفحة ${ar(pos + 1)} من ${ar(group.length)}${leftW > 0 ? `، ${pos + 1 >= group.length ? 'الأخيرة' : `بقي نحو ${MN(mins(leftW))}`}` : ''}`}
+                  {before ? 'مما قرأته من قبل' : `صفحة ${ar(pos + 1)} من ${ar(group.length)}${leftW > 0 ? `، ${pos + 1 >= group.length ? 'الأخيرة' : `بقي نحو ${MN(mins(leftW))}`}` : ''}`}
                 </Text>
               </View>
               <Pressable onPress={() => { tap('medium'); next(); }} accessibilityRole="button" accessibilityLabel={nextLabel}>
