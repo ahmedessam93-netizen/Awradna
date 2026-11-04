@@ -8,6 +8,7 @@ import { Mark, Panel, Txt, useTap } from '../../components/ui';
 import { ChevronIcon } from '../../components/icons';
 import { addDays, ar, atMidnight, cnt, dayPages, dkey, PG, sum } from '../../core/plan';
 import { usePlan, useStore } from '../../core/store';
+import { readFrac } from '../../core/sittings';
 import { F, usePalette } from '../../theme';
 
 const NAMES = ['الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد'];
@@ -19,7 +20,7 @@ export default function Week() {
   const stat = (d: Date) => {
     const pages = dayPages(state.settings, d.getDay());
     const ds = state.days[dkey(d)];
-    const read = ds ? sum(pages.filter((x) => ds.read[x.id])) : 0;
+    const read = ds ? pages.reduce((a, x) => a + x.w * readFrac(ds.read, x.id), 0) : 0;
     return { total: sum(pages), read, full: pages.length > 0 && read >= sum(pages) - 1e-9 };
   };
   const mon = monday(P.date);

@@ -10,7 +10,8 @@ import { GlassButton, GoldButton, Mark, Panel, Txt, useTap } from '../../compone
 import { DAYS } from '../../core/data';
 import { plan as planToday0 } from '../../core/plan';
 const planToday = (st: any, now: Date) => planToday0(st, now).key;
-import { addDays, ar, dkey, fmtTime, mins, MN, PG, sum, sittingPortion } from '../../core/plan';
+import { addDays, ar, dkey, fmtTime, mins, MN, PG, sum } from '../../core/plan';
+import { itemRead, readFrac } from '../../core/sittings';
 import { useStore, useViewPlan } from '../../core/store';
 import { useUpdate } from '../../core/update';
 import { WebNotice } from '../../components/WebNotice';
@@ -33,21 +34,18 @@ export default function Today() {
   const W = Math.min(width, 520) - 48;
   const ring = Math.min(W, 342);
 
-  const portionW = sum(P.portion);
+  const dayRead = state.days[P.key]?.read;
+  // what is still unread in the suggested sitting
+  const portionW = P.segs[P.nextIdx].reduce((a, it) => a + (itemRead(dayRead, it) ? 0 : it.w), 0);
   const w = P.wins[P.nextIdx];
   const isLast = P.nextIdx === P.wins.length - 1;
-  const first = P.portion[0], last = P.portion[P.portion.length - 1];
-  const startAt = P.remaining.length ? P.pages.indexOf(P.remaining[0]) : 0;
-  const open = (start: number, review = false, win?: number) => {
-    tap('medium');
-    router.push({ pathname: '/reader', params: { start: String(start), review: review ? '1' : '0', day: P.key, ...(win != null ? { win: String(win) } : {}) } });
-  };
-  // any sitting can be opened: a missed one keeps its pages
+  const read = (params: Record<string, string>) => { tap('medium'); router.push({ pathname: '/reader', params: { day: P.key, ...params } }); };
+  // continue from the saved place
+  const cont = () => read({});
+  // each sitting has its own fixed pages, opened from their start, even if already read
   const openSitting = (k: number) => {
-    const done = !!(state.days[P.key]?.done || {})[P.wins[k].i];
-    if (P.complete || done) { open(0, true); return; }
-    const por = sittingPortion(P, k);
-    open(por.length ? P.pages.indexOf(por[0]) : 0, false, k);
+    let j = k; while (j < P.segs.length - 1 && !P.segs[j].length) j++;
+    read({ seg: String(j) });
   };
   const shiftDay = (n: number) => {
     const [y, m, d] = P.key.split('-').map(Number);
@@ -59,7 +57,8 @@ export default function Today() {
 
   // what the hero says. The sittings are only a guide: reading always continues from where
   // the person stopped, and each day starts from the beginning of its wird.
-  const contLabel = P.readW > 0 && P.remaining[0] ? `تابع من ص ${pn(P.remaining[0].id)}` : `ابدأ من أول ورد ${P.dayName}`;
+  const placeId = P.at ? P.at.split('~')[0] : P.readW > 0 && P.remaining[0] ? P.remaining[0].id : null;
+  const contLabel = placeId ? `تابع من ص ${pn(placeId)}` : `ابدأ من أول ورد ${P.dayName}`;
   let eyebrow = '', title = '', line = '', cta = '', secondary = false, eyeTone: 'now' | 'done' | 'plain' = 'now';
   if (P.pages.length && !isToday && !P.complete) {
     eyebrow = isPast ? (P.readW > 0 ? 'يوم سابق لم يكتمل' : 'يوم سابق') : 'يوم قادم';
@@ -88,15 +87,15 @@ export default function Today() {
     const ds = state.days[P.key]?.read || {};
     return DAYS[P.wd].items.map((it, idx) => {
       const [part, ttl, a, b] = it; if (!state.settings.parts[part]) return null;
-      const pgs = P.pages.filter((x) => x.item === idx); const read = pgs.filter((x) => ds[x.id]);
+      const pgs = P.pages.filter((x) => x.item === idx); const read = pgs.filter((x) => readFrac(ds, x.id) >= 1);
       const rng = typeof a === 'string' ? `ص ${pn(String(a))}` : a === b ? `ص ${ar(a)}` : `ص ${ar(a)}–${ar(b as number)}`;
       const n = Math.max(1, Math.round(sum(pgs)));
       const sub = part === 'salawat' ? `من صلوات جليلة، ${rng}` : part === 'quran' ? `ورد القرآن، ${rng}` : `${rng}، ${PG(n)}`;
       const inNow = isToday && !P.complete && P.portion.some((x) => x.item === idx);
       const st = read.length === pgs.length && pgs.length ? 'done' : read.length ? 'some' : inNow ? 'now' : 'none';
       return { idx, ttl, sub, st, label: st === 'done' ? 'تمّ' : st === 'some' ? `${ar(read.length)} من ${ar(pgs.length)}` : st === 'now' ? 'الآن' : 'لم يبدأ',
-        firstUnread: P.pages.findIndex((x) => x.item === idx && !ds[x.id]), firstAny: P.pages.findIndex((x) => x.item === idx) };
-    }).filter(Boolean) as { idx: number; ttl: string; sub: string; st: string; label: string; firstUnread: number; firstAny: number }[];
+        first: (pgs.find((x) => readFrac(ds, x.id) < 1) || pgs[0])?.id };
+    }).filter(Boolean) as { idx: number; ttl: string; sub: string; st: string; label: string; first: string }[];
   }, [P, state]);
 
   const city = state.settings.cityName || '';
@@ -176,10 +175,10 @@ export default function Today() {
           {line ? <Txt v="meta" align="center" style={{ fontSize: 15, lineHeight: 24 }}>{line}</Txt> : null}
           <View style={{ alignSelf: 'stretch', marginTop: 16, gap: 10 }}>
             {!P.pages.length ? <GoldButton label="الإعدادات" onPress={() => router.navigate('/settings')} /> : null}
-            {cta && !secondary ? <GoldButton label={cta} icon={<BookIcon size={22} color={p.onPrimary} />} onPress={() => open(startAt)} /> : null}
-            {cta && secondary ? <GlassButton label={cta} tone="gold" onPress={() => open(startAt)} /> : null}
-            {P.complete ? <GlassButton label="مراجعة ما قرأت" tone="gold" onPress={() => open(0, true)} /> : null}
-            {!P.complete && P.pages.length ? <Txt v="label" align="center" style={{ marginTop: 2 }}>الجلسات للتيسير فقط. اقرأ الورد دفعة واحدة أو على مهلك، والتطبيق يحفظ موضعك.</Txt> : null}
+            {cta && !secondary ? <GoldButton label={cta} icon={<BookIcon size={22} color={p.onPrimary} />} onPress={cont} /> : null}
+            {cta && secondary ? <GlassButton label={cta} tone="gold" onPress={cont} /> : null}
+            {P.complete ? <GlassButton label="مراجعة ما قرأت" tone="gold" onPress={() => read({ seg: '0' })} /> : null}
+            {!P.complete && P.pages.length ? <Txt v="label" align="center" style={{ marginTop: 2 }}>الجلسات للتيسير فقط. اقرأ الورد دفعة واحدة أو على مهلك، والتطبيق يحفظ الصفحة التي وقفت عندها.</Txt> : null}
           </View>
         </Animated.View>
 
@@ -197,7 +196,7 @@ export default function Today() {
             <Panel style={{ marginTop: 20 }}>
               <Txt v="h2" style={{ marginTop: 10, marginBottom: 2 }}>أجزاء ورد اليوم</Txt>
               {parts.map((x, k) => (
-                <Pressable key={x.idx} accessibilityRole="button" accessibilityLabel={`${x.ttl}، ${x.label}`} onPress={() => open(x.firstUnread >= 0 ? x.firstUnread : x.firstAny, x.firstUnread < 0)}
+                <Pressable key={x.idx} accessibilityRole="button" accessibilityLabel={`${x.ttl}، ${x.label}`} onPress={() => read({ page: x.first })}
                   style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, opacity: pressed ? 0.7 : 1, borderTopWidth: k === 0 ? 0 : 1, borderTopColor: p.rule })}>
                   <Mark color={x.st === 'done' ? p.gold : x.st === 'some' || x.st === 'now' ? p.turq : p.goldFaint} />
                   <View style={{ flex: 1, minWidth: 0 }}>

@@ -35,8 +35,10 @@ type Ctx = {
   now: Date;
   setSettings: (patch: Partial<State['settings']>) => void;
   markRead: (dayKey: string, ids: string[]) => void;
-  markSitting: (dayKey: string, windowIndex: number) => void;
+  markSitting: (dayKey: string, windowIndex: number, keys?: string[], nextAt?: string) => void;
   completeDay: (dayKey: string, windowIndexes: number[]) => void;
+  /** Save the place in a day's wird (a reader item key). Saved at once, on the device. */
+  setPlace: (dayKey: string, at: string) => void;
   resetDay: (dayKey: string) => void;
   replaceAll: (s: State) => void;
   updateDaily: (dayKey: string, fn: (d: DailyDay) => DailyDay) => void;
@@ -84,7 +86,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return () => { clearInterval(tick); sub.remove(); };
   }, [scheduleSideEffects]);
 
-  const dayOf = (s: State, key: string): DayState => s.days[key] ? { read: { ...s.days[key].read }, done: { ...(s.days[key].done || {}) } } : { read: {}, done: {} };
+  const dayOf = (s: State, key: string): DayState => s.days[key] ? { ...s.days[key], read: { ...s.days[key].read }, done: { ...(s.days[key].done || {}) } } : { read: {}, done: {} };
 
   const api = useMemo<Ctx>(() => ({
     state, ready, now, viewDay, setViewDay,
@@ -97,10 +99,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ids.forEach((id) => { if (!d.read[id]) { d.read[id] = 1; changed = true; } });
       if (changed) commit({ ...s, days: { ...s.days, [key]: d } }, 4000);
     },
-    markSitting: (key, w) => {
+    markSitting: (key, w, keys, nextAt) => {
       const s = latest.current; const d = dayOf(s, key);
-      if (d.done[w]) return; d.done[w] = 1;
+      d.done[w] = 1; (keys || []).forEach((k) => { d.read[k] = 1; });
+      if (nextAt) d.at = nextAt;
       commit({ ...s, days: { ...s.days, [key]: d } }, 800);
+    },
+    setPlace: (key, at) => {
+      const s = latest.current;
+      if (s.days[key]?.at === at) return;
+      const d = dayOf(s, key); d.at = at;
+      // only the place changes: save it now, without touching notifications
+      latest.current = { ...s, days: { ...s.days, [key]: d } };
+      setState(latest.current); persist(latest.current);
     },
     completeDay: (key, ws) => {
       const s = latest.current; const d = dayOf(s, key);

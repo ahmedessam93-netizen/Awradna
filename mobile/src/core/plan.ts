@@ -3,6 +3,7 @@
 import { DAYS, HALF, MIN_PER_PAGE } from './data';
 import PT from './prayer';
 import { phraseAt, SHORT_MAX } from './phrases';
+import { itemRead, readFrac, segmentsFor, Segments } from './sittings';
 
 export const WIN_NAMES = ['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء'];
 export const WIN_KEYS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
@@ -15,7 +16,8 @@ export type Settings = {
   city?: number | 'geo'; cityName?: string; theme?: 'auto' | 'light' | 'dark'; wake?: boolean; haptics?: boolean;
   travel?: boolean; pageZoom?: number;
 };
-export type DayState = { read: Record<string, number>; done: Record<string, number> };
+// read: pages (or page halves, 'id~u' / 'id~f') read. done: sittings completed. at: the saved place (a reader item key).
+export type DayState = { read: Record<string, number>; done: Record<string, number>; at?: string };
 export type DailyDay = { am?: Record<string, number>; pm?: Record<string, number>; bahr?: number };
 export type State = { settings: Settings; days: Record<string, DayState>; daily: Record<string, DailyDay> };
 
@@ -93,29 +95,37 @@ export type Plan = {
   date: Date; key: string; wd: number; dayName: string; pages: Page[]; remaining: Page[];
   wins: { i: number; name: string; time: Date | null }[]; cur: number; curDone: boolean; nextIdx: number;
   total: number; left: number; readW: number; portion: Page[]; complete: boolean;
+  segs: Segments; at: string | null;
 };
+
+const uniq = (a: Page[]) => a.filter((p, i) => i === 0 || a[i - 1].id !== p.id);
 
 export function plan(st: State, now: Date = new Date()): Plan {
   const s = st.settings;
   const date = wirdDate(s, now); const key = dkey(date); const wd = date.getDay();
   const pages = dayPages(s, wd); const ds = st.days[key] || { read: {}, done: {} };
   const read = ds.read || {}; const done = ds.done || {};
-  const remaining = pages.filter((p) => !read[p.id]);
+  const remaining = pages.filter((p) => readFrac(read, p.id) < 1);
   const wins = windowsFor(s, date);
+  const segs = segmentsFor(pages, wins.length, s.fajrHeavy);
   let cur = 0; wins.forEach((w, i) => { if (w.time && w.time <= now) cur = i; });
   const curDone = !!done[wins[cur].i];
-  // The sitting to read next: the first one from now on that isn't done yet (reading ahead
-  // moves it forward, one sitting at a time). If all are done, the last one takes what is left.
-  let nextIdx = wins.findIndex((w, k) => k >= cur && !done[w.i]);
+  // the suggested sitting: the first one from now on that isn't done yet (the pages of each
+  // sitting are fixed; this only says which one fits the hour)
+  const open = (k: number) => !done[wins[k].i] && segs[k].length > 0;
+  let nextIdx = wins.findIndex((w, k) => k >= cur && open(k));
+  if (nextIdx < 0) nextIdx = wins.findIndex((w, k) => open(k));
   if (nextIdx < 0) nextIdx = wins.length - 1;
-  const remWin = Math.max(1, wins.filter((w, k) => k >= nextIdx && !done[w.i]).length);
-  const total = sum(pages), left = sum(remaining), readW = total - left;
-  const share = (s.fajrHeavy && nextIdx === 0 && readW === 0 && wins.length >= 4) ? total * 0.4 : left / remWin;
-  const portion: Page[] = []; let acc = 0;
-  for (const p of remaining) { if (acc >= share - 1e-9 && portion.length) break; portion.push(p); acc += p.w; }
-  if (remWin === 1) { portion.length = 0; portion.push(...remaining); }
-  return { date, key, wd, dayName: DAYS[wd].name, pages, remaining, wins, cur, curDone, nextIdx, total, left, readW, portion, complete: remaining.length === 0 && pages.length > 0 };
+  const total = sum(pages);
+  const readW = pages.reduce((a, p) => a + p.w * readFrac(read, p.id), 0);
+  const left = Math.max(0, total - readW);
+  const unread = segs[nextIdx].filter((it) => !itemRead(read, it));
+  const portion = uniq((unread.length ? unread : segs[nextIdx]).map((it) => it.page));
+  return { date, key, wd, dayName: DAYS[wd].name, pages, remaining, wins, cur, curDone, nextIdx, total, left, readW, portion, complete: remaining.length === 0 && pages.length > 0, segs, at: ds.at || null };
 }
+
+/** Weight of one sitting (its pages, halves counted as a share of the page). */
+export const segW = (P: Plan, k: number) => P.segs[k].reduce((a, it) => a + it.w, 0);
 
 export function rangeText(portion: Page[]) {
   if (!portion.length) return '';
@@ -158,19 +168,18 @@ export function upcomingNotifications(st: State, now: Date, maxCount = 60): Plan
     const pages = dayPages(s, wd); if (!pages.length) continue;
     const ds = st.days[key] || { read: {}, done: {} };
     const wins = windowsFor(s, date);
-    const left = sum(pages.filter((p) => !(ds.read || {})[p.id]));
-    if (left <= 0) continue; // day already finished
+    const left = pages.reduce((a, p) => a + p.w * (1 - readFrac(ds.read, p.id)), 0);
+    if (left <= 0.01) continue; // day already finished
+    const segs = segmentsFor(pages, wins.length, s.fajrHeavy);
     wins.forEach((w, idx) => {
       if (!w.time) return;
       const at = new Date(w.time.getTime() + offset);
       if (at <= now) return;
       if ((ds.done || {})[w.i]) return;
-      // remaining windows from this one on share what is left (as of now)
-      const futureWins = wins.filter((x, j) => j >= idx).length;
+      if (!segs[idx].length) return;
+      const share = segs[idx].reduce((a, it) => a + it.w, 0);
       const isLast = idx === wins.length - 1;
-      let share = isLast ? left : left / futureWins;
-      if (s.fajrHeavy && idx === 0 && left === sum(pages) && wins.length >= 4) share = sum(pages) * 0.4;
-      const body = isLast ? `آخر جلسة اليوم، ${PG(Math.round(share))}، نحو ${MN(mins(share))}` : `${PG(Math.round(share))}، نحو ${MN(mins(share))}`;
+      const body = `${isLast ? 'آخر جلسة اليوم، ' : ''}${PG(Math.max(1, Math.round(share)))}، نحو ${MN(mins(share))}`;
       out.push({ at, id: `${key}-${w.i}`, title: `ورد ${DAYS[wd].name}، جلسة ${w.name}`, body });
     });
   }
@@ -208,12 +217,3 @@ export function planForDay(st: State, key: string | null, now: Date = new Date()
   return plan(st, new Date((f ? f.getTime() : new Date(y, m - 1, d, 5).getTime()) + 60000));
 }
 
-// The pages of one chosen sitting (k = position among the day's sittings), taken from what is
-// still unread: an even share of the day, so a missed sitting can be read at any time.
-export function sittingPortion(P: Plan, k: number): Page[] {
-  if (!P.remaining.length) return [];
-  const share = P.total / Math.max(1, P.wins.length);
-  const out: Page[] = []; let acc = 0;
-  for (const pg of P.remaining) { if (acc >= share - 1e-9 && out.length) break; out.push(pg); acc += pg.w; }
-  return out;
-}

@@ -2,13 +2,16 @@
 // While zoomed, page swiping is paused so the drag moves the page instead.
 import { PageImage } from './PageImage';
 import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
+import { F } from '../theme';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
-type Props = { source: number; aspect: number; width: number; height: number; onZoomChange: (zoomed: boolean) => void; onTap: () => void; label: string; tint: string; initialScale?: number };
+// Part of a page that belongs to another sitting: veiled, with a short note.
+export type Veil = { half: 'until' | 'from'; top: number; bottom: number; x: number; color: string; line: string; ink: string; label: string };
+type Props = { veil?: Veil; source: number; aspect: number; width: number; height: number; onZoomChange: (zoomed: boolean) => void; onTap: () => void; label: string; tint: string; initialScale?: number };
 
-export function ZoomPage({ source, aspect, width, height, onZoomChange, onTap, label, tint, initialScale = 1 }: Props) {
+export function ZoomPage({ veil, source, aspect, width, height, onZoomChange, onTap, label, tint, initialScale = 1 }: Props) {
   // fit inside the area, keeping the page's proportions
   const fitW = Math.min(width, height * aspect);
   const fitH = fitW / aspect;
@@ -63,8 +66,30 @@ export function ZoomPage({ source, aspect, width, height, onZoomChange, onTap, l
       <View style={{ width, height, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }} accessible accessibilityLabel={label}>
         <Animated.View style={[{ width: fitW, height: fitH }, st]}>
           <PageImage source={source} tint={tint} width={fitW} height={fitH} />
+          {veil ? <PageVeil v={veil} w={fitW} h={fitH} /> : null}
         </Animated.View>
       </View>
     </GestureDetector>
+  );
+}
+
+function PageVeil({ v, w, h }: { v: Veil; w: number; h: number }) {
+  const lineEnd = v.x <= 0.08; // the prayer ends at the end of its line
+  const top = v.top * h, bot = v.bottom * h, x = v.x * w;
+  const box = (l: number, t: number, ww: number, hh: number, k: string) => (
+    <View key={k} pointerEvents="none" style={{ position: 'absolute', left: l, top: t, width: Math.max(0, ww), height: Math.max(0, hh), backgroundColor: v.color, opacity: 0.88 }} />
+  );
+  const parts = v.half === 'until'
+    ? [box(0, bot, w, h - bot, 'a'), lineEnd ? null : box(0, top, x, bot - top, 'b')]
+    : [box(0, 0, w, lineEnd ? bot : top, 'a'), lineEnd ? null : box(x, top, w - x, bot - top, 'b')];
+  const edge = v.half === 'until' ? bot : lineEnd ? bot : top;
+  return (
+    <>
+      {parts}
+      <View pointerEvents="none" style={{ position: 'absolute', left: w * 0.06, right: w * 0.06, top: edge - 0.5, height: 1, backgroundColor: v.line, opacity: 0.7 }} />
+      <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', ...(v.half === 'until' ? { top: edge + 10 } : { top: Math.max(4, edge - 34) }) }}>
+        <Text allowFontScaling={false} style={{ fontFamily: F.uiMed, fontSize: 13, lineHeight: 20, color: v.ink, paddingHorizontal: 12, paddingVertical: 3, borderRadius: 12, borderWidth: 1, borderColor: v.line, overflow: 'hidden' }}>{v.label}</Text>
+      </View>
+    </>
   );
 }
