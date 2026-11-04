@@ -1,5 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { leave } from '../core/nav';
+import { ANDROID_PAGE } from '../core/update';
 import { router } from 'expo-router';
 import qrcode from 'qrcode-generator';
 import React, { useMemo, useState } from 'react';
@@ -11,7 +12,8 @@ import { GlassButton, GoldButton, IconButton, Panel, Txt, useTap } from '../comp
 import { F, usePalette } from '../theme';
 
 // Sharing gives the Android download page (the iPhone version is opened from the site itself).
-const APP_LINK = 'https://awradna.netlify.app/android/';
+// It lives on GitHub Pages, which opens in Egypt (netlify.app does not).
+const APP_LINK = ANDROID_PAGE;
 const MESSAGE = `أورادنا لأندرويد: ورد اليوم من كتاب «أورادنا» للطريقة الصديقية الشاذلية، في جلسات قصيرة بعد كل صلاة.\n${APP_LINK}`;
 
 function QR({ value, size }: { value: string; size: number }) {
@@ -46,7 +48,7 @@ export default function ShareScreen() {
             <View style={{ borderRadius: 20, overflow: 'hidden' }}><QR value={APP_LINK} size={Math.min(200, W - 80)} /></View>
             <Text style={{ fontFamily: F.display, fontSize: 22, lineHeight: 30, color: p.goldLight }}>أورادنا</Text>
             <Txt v="meta" align="center" style={{ lineHeight: 24 }}>تطبيق أندرويد: ورد اليوم من كتاب «أورادنا» في جلسات قصيرة بعد كل صلاة، مع إشعارات وويدجت.</Txt>
-            <Text style={{ fontFamily: F.ui, fontSize: 13, color: p.gold, writingDirection: 'ltr' }}>awradna.netlify.app/android</Text>
+            <Text numberOfLines={1} adjustsFontSizeToFit style={{ fontFamily: F.ui, fontSize: 13, color: p.gold, writingDirection: 'ltr' }}>{APP_LINK.replace(/^https:\/\//, '').replace(/\/$/, '')}</Text>
           </View>
         </Panel>
       </View>
