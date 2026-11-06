@@ -1,8 +1,12 @@
 <!doctype html>
 <html lang="ar" dir="rtl" style="background:#0C1733"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>أورادنا</title>
 <script>
-  // GitHub Pages has one 404 page for the whole site: send links inside the web app to its start.
-  var p = location.pathname;
-  if (p.indexOf('/Awradna/quran/app/') === 0) location.replace('/Awradna/quran/app/');
+  // GitHub Pages has one 404 page for the whole site. Links are case-sensitive there, so a link
+  // typed or forwarded in lower case ("awradna") lands here: send each one to its real page.
+  var p = location.pathname.toLowerCase();
+  if (p.indexOf('/awradna/quran/app/') === 0) location.replace('/Awradna/quran/app/');
+  else if (p.indexOf('/awradna/quran/tasbee.apk') === 0) location.replace('/Awradna/quran/tasbee.apk');
+  else if (p.indexOf('/awradna/quran') === 0) location.replace('/Awradna/quran/');
+  else if (p.indexOf('/awradna/awradna.apk') === 0) location.replace('/Awradna/awradna.apk');
   else location.replace('/Awradna/');
 </script></head><body></body></html>
