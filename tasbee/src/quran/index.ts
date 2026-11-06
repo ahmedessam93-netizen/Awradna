@@ -3,8 +3,10 @@
 import PAGES_RAW from './pages.json';
 import META from './meta.json';
 
-/** A line: a surah title ['s', n], a basmala ['b', n], or the words of the line (one glyph string each). */
-export type Line = ['s', number] | ['b', number] | string[];
+/** A word: its glyphs in the page font and its width in font units ([w1, w2] for "۞ word"). */
+export type Word = [string, number | number[]];
+/** A line: a surah title ['s', n], a basmala ['b', n], or the words of the line. */
+export type Line = ['s', number] | ['b', number] | Word[];
 export const PAGES = PAGES_RAW as unknown as Line[][];
 export const PAGE_COUNT = 604;
 
@@ -20,7 +22,7 @@ export const PARTS = Q.parts;
 
 export const isTitle = (l: Line): l is ['s', number] => l[0] === 's';
 export const isBasmala = (l: Line): l is ['b', number] => l[0] === 'b';
-export const isText = (l: Line): l is string[] => l[0] !== 's' && l[0] !== 'b';
+export const isText = (l: Line): l is Word[] => l[0] !== 's' && l[0] !== 'b';
 
 /** A place in the mushaf: page, line index (0-based, in the page's line list), word index. Comparable as a number. */
 export const pos = (p: number, l: number, w: number) => p * 10000 + l * 100 + w;

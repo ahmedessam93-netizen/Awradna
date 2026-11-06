@@ -117,9 +117,17 @@ export default function Reader() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const close = () => { flush(); leave(free ? '/mushaf' : '/'); };
 
+  // The page is shown alone, like a printed mushaf. The controls appear for a moment when the
+  // reader opens, and whenever the page is tapped; turning the page hides them again.
   const chrome = useSharedValue(1);
   const [chromeOn, setChromeOn] = useState(true);
-  const toggleChrome = useCallback(() => { const v = chromeOn ? 0 : 1; chrome.value = withTiming(v, { duration: 220 }); setChromeOn(!chromeOn); }, [chromeOn]); // eslint-disable-line react-hooks/exhaustive-deps
+  const hideT = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showChrome = useCallback((on: boolean) => {
+    if (hideT.current) { clearTimeout(hideT.current); hideT.current = null; }
+    chrome.value = withTiming(on ? 1 : 0, { duration: 220 }); setChromeOn(on);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { hideT.current = setTimeout(() => showChrome(false), 2200); return () => { if (hideT.current) clearTimeout(hideT.current); }; }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const toggleChrome = useCallback(() => showChrome(!chromeOn), [chromeOn, showChrome]);
   const chromeSt = useAnimatedStyle(() => ({ opacity: chrome.value }));
 
   const [khatmaNew, setKhatmaNew] = useState(false);
@@ -139,7 +147,8 @@ export default function Reader() {
       finishSitting(P.key, 4);
       tap('success');
     }
-    if (!chromeOn) { chrome.value = withTiming(1); setChromeOn(true); }
+    // the controls stay out of the way while reading; on the pause screens there are none
+    if (chromeOn) showChrome(false);
   };
   // when the last sitting of the week is done, the khatma is complete
   const cur = items[idx];
@@ -151,20 +160,20 @@ export default function Reader() {
   const next = () => pager.current?.setPage(Math.min(idx + 1, items.length - 1));
   const prev = () => pager.current?.setPage(Math.max(idx - 1, 0));
 
-  // the area a page may use: below the top bar and above the bottom bar
-  const topH = insets.top + 70, botH = insets.bottom + 84;
-  const pageW = Math.min(width, 620) - 20;
-  const pageH = height - topH - botH;
+  // the page uses the whole screen (inside the phone's own status and navigation bars)
+  const pageW = Math.min(width, 640);
+  const pageH = height - insets.top - insets.bottom;
 
   const k = cur.kind === 'page' ? cur.it.k : cur.kind === 'stop' ? cur.k : 4;
   const group = items.filter((x): x is { kind: 'page'; it: RItem } => x.kind === 'page' && x.it.k === k);
   const pos = cur.kind === 'page' ? group.findIndex((x) => x.it.key === cur.it.key) : group.length;
   const pageNo = cur.kind === 'page' ? cur.it.page : 0;
   const isLastOfSeg = !free && cur.kind === 'page' && cur.it.last;
-  const nextLabel = free ? 'التالية' : isLastOfSeg ? (k === 4 ? 'إتمام الجزء' : 'إتمام الجلسة') : 'التالية';
+  const nextLabel = isLastOfSeg ? (k === 4 ? 'إتمام الجزء' : 'إتمام الجلسة') : 'التالية';
   const otherDay = !!params.day && params.day !== planForDay(state, null, new Date()).key;
-  const title = free ? 'المصحف' : `${otherDay ? `${P.dayName}، ` : ''}جلسة ${P.wins[k]?.name ?? ''}`;
-  const sub = cur.kind === 'page' ? `${surahsOn(pageNo).map(surahName).join('، ')}، ص ${ar(pageNo)}، الجزء ${ar(juzOf(pageNo))}` : '';
+  const names = cur.kind === 'page' ? surahsOn(pageNo).map((n) => `سورة ${surahName(n)}`).join('، ') : '';
+  const title = free ? names : `${otherDay ? `${P.dayName}، ` : ''}جلسة ${P.wins[k]?.name ?? ''}`;
+  const sub = cur.kind === 'page' ? (free ? `الجزء ${ar(juzOf(pageNo))}، الصفحة ${ar(pageNo)}` : `${names}، الصفحة ${ar(pageNo)}`) : '';
 
   const stopInfo = (k0: number) => {
     const nk = k0 + 1; const nw = P.wins[nk];
@@ -199,8 +208,8 @@ export default function Reader() {
             return (
               <View key={x.it.key} style={{ flex: 1 }}>
                 {Math.abs(i - idx) <= 1 ? (
-                  <Pressable onPress={toggleChrome} accessible={false} style={{ flex: 1, paddingTop: topH, paddingBottom: botH, alignItems: 'center' }}>
-                    <MushafPage page={x.it.page} width={pageW} height={pageH} ink={p.pageInk} faint={p.dark ? 'rgba(240,228,203,0.22)' : 'rgba(27,36,54,0.2)'} frame={p.gold}
+                  <Pressable onPress={toggleChrome} accessible={false} style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom, alignItems: 'center' }}>
+                    <MushafPage page={x.it.page} width={pageW} height={pageH} ink={p.pageInk} faint={p.dark ? 'rgba(240,228,203,0.22)' : 'rgba(27,36,54,0.2)'} gold={p.gold} muted={p.muted}
                       from={free ? undefined : x.it.from} to={free ? undefined : x.it.to} />
                   </Pressable>
                 ) : null}
@@ -245,10 +254,10 @@ export default function Reader() {
         <Animated.View pointerEvents={chromeOn ? 'box-none' : 'none'} style={[{ position: 'absolute', bottom: insets.bottom + 10, left: 12, right: 12 }, chromeSt]}>
           <Bar radius={24}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10 }}>
-              <Pressable onPress={() => { tap(); prev(); }} disabled={idx === 0} accessibilityRole="button" accessibilityLabel="الصفحة السابقة" hitSlop={6}
+              {free ? null : <Pressable onPress={() => { tap(); prev(); }} disabled={idx === 0} accessibilityRole="button" accessibilityLabel="الصفحة السابقة" hitSlop={6}
                 style={({ pressed }) => ({ width: 48, height: 50, borderRadius: 17, alignItems: 'center', justifyContent: 'center', opacity: idx === 0 ? 0.35 : pressed ? 0.7 : 1, backgroundColor: p.chip, borderWidth: 1, borderColor: p.chipBorder })}>
                 <ChevronIcon dir="right" size={20} color={p.ink} strokeWidth={2.2} />
-              </Pressable>
+              </Pressable>}
               <View style={{ flex: 1 }} accessible accessibilityLabel={free ? `صفحة ${ar(pageNo)} من ٦٠٤` : `الصفحة ${ar(pos + 1)} من ${ar(group.length)} في الجلسة`}>
                 <View style={{ height: 4, borderRadius: 2, backgroundColor: p.chip, overflow: 'hidden', flexDirection: 'row', direction: 'rtl' }}>
                   <View style={{ width: `${Math.round(((free ? pageNo : pos + 1) / (free ? 604 : group.length)) * 100)}%`, backgroundColor: p.turq }} />
@@ -257,14 +266,14 @@ export default function Reader() {
                   {free ? `صفحة ${ar(pageNo)} من ٦٠٤` : `${ar(pos + 1)} من ${ar(group.length)}${isLastOfSeg ? '، آخر صفحة في الجلسة' : ''}`}
                 </Text>
               </View>
-              <Pressable onPress={() => { tap('medium'); next(); }} disabled={free && idx === items.length - 1} accessibilityRole="button" accessibilityLabel={nextLabel}>
+              {free ? null : <Pressable onPress={() => { tap('medium'); next(); }} accessibilityRole="button" accessibilityLabel={nextLabel}>
                 {({ pressed }) => (
                   <LinearGradient colors={p.primary} locations={[0, 0.48, 1]} style={{ height: 50, paddingHorizontal: 18, borderRadius: 17, flexDirection: 'row', alignItems: 'center', gap: 8, opacity: pressed ? 0.85 : 1 }}>
                     <Text maxFontSizeMultiplier={1.2} style={{ fontFamily: F.uiBold, fontSize: 15.5, color: p.onPrimary }}>{nextLabel}</Text>
                     <ChevronIcon size={18} color={p.onPrimary} strokeWidth={2.2} />
                   </LinearGradient>
                 )}
-              </Pressable>
+              </Pressable>}
             </View>
           </Bar>
         </Animated.View>

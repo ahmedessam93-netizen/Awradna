@@ -186,7 +186,21 @@ meta = {
     'fonts': fontsMeta,
     'parts': parts,
 }
-json.dump(pages, open(f'{OUT}/pages.json', 'w'), ensure_ascii=False, separators=(',', ':'))
+# Each word goes out with its width in font units, so the app places every word itself (exactly
+# as the line is laid out in print) instead of relying on each phone's text measuring.
+# A word written with a quarter-hizb sign before it ("۞ word") is two parts: [glyphs, [w1, w2]].
+out_pages = []
+for p in range(1, 605):
+    a = adv(p); outL = []
+    for L in pages[p - 1]:
+        if L[0] in ('s', 'b'): outL.append(L); continue
+        ws = []
+        for code in L:
+            bits = code.split(' ')
+            ws.append([code, a(code)] if len(bits) == 1 else [code, [a(x) for x in bits]])
+        outL.append(ws)
+    out_pages.append(outL)
+json.dump(out_pages, open(f'{OUT}/pages.json', 'w'), ensure_ascii=False, separators=(',', ':'))
 json.dump(meta, open(f'{OUT}/meta.json', 'w'), ensure_ascii=False, separators=(',', ':'))
 for d, pt in enumerate(parts):
     print(d + 1, pt['name'], 'pages', pt['pages'], 'lines', pt['w'])
