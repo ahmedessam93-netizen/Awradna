@@ -108,7 +108,7 @@ export type Plan = {
 export const sitW = (part: Part, k: number) => part.sittings[k].w;
 export const sitPages = (part: Part, k: number) => part.sittings[k].to[0] - part.sittings[k].from[0] + 1;
 export const sitLabel = (part: Part, k: number) => sittingRange(part.sittings[k]);
-export const partTitleOf = (d: number) => `الجزء ${ORDINALS[d]}: ${PARTS[d].name}`;
+export const partTitleOf = (d: number) => `الحزب ${ORDINALS[d]}: ${PARTS[d].name}`;
 
 /** How much of a sitting is behind the saved place (0–1). */
 function placeFrac(part: Part, at: string | null, k: number) {
@@ -174,8 +174,8 @@ export function snapshot(st: State, at: Date = new Date()): Snapshot {
   const tomorrowFajr = times(st.settings, addDays(P.date, 1)).fajr;
   const next = nextWin ? `${nextWin.name} ${fmtTime(nextWin.time)}` : `الفجر ${fmtTime(tomorrowFajr)}`;
   const progress = P.total ? P.readW / P.total : 0;
-  const day = `${P.dayName}: الجزء ${ORDINALS[P.d]}`;
-  if (P.complete) return { day, title: 'تمّ جزء اليوم', detail: P.part.name, progress: 1, next: `الفجر ${fmtTime(tomorrowFajr)}`, complete: true };
+  const day = `${P.dayName}: الحزب ${ORDINALS[P.d]}`;
+  if (P.complete) return { day, title: 'تمّ حزب اليوم', detail: P.part.name, progress: 1, next: `الفجر ${fmtTime(tomorrowFajr)}`, complete: true };
   const title = (P.curDone && P.nextIdx > P.cur) ? `القادمة: جلسة ${w.name}` : `جلسة ${w.name}`;
   return { day, title, detail: sitLabel(P.part, P.nextIdx), progress, next, complete: false };
 }
@@ -196,7 +196,7 @@ export function upcomingNotifications(st: State, now: Date, maxCount = 60): Plan
       if (at <= now) return;
       if ((ds.done || {})[k]) return;
       const mins = minutesFor(part.sittings[k].w);
-      out.push({ at, id: `${key}-${k}`, title: `جلسة ${w.name}: ${sitLabel(part, k)}`, body: `${PG(sitPages(part, k))}، نحو ${MN(mins)}. الجزء ${ORDINALS[d]} من التسبيع.` });
+      out.push({ at, id: `${key}-${k}`, title: `جلسة ${w.name}: ${sitLabel(part, k)}`, body: `${PG(sitPages(part, k))}، نحو ${MN(mins)}. الحزب ${ORDINALS[d]} من التسبيع.` });
     });
   }
   return out.sort((a, b) => +a.at - +b.at).slice(0, maxCount);

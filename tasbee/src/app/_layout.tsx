@@ -100,6 +100,7 @@ function Shell() {
           <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
           <Stack.Screen name="city" options={{ presentation: 'modal', contentStyle: { backgroundColor: p.dark ? '#0E1A3A' : '#F5F1EA' } }} />
           <Stack.Screen name="khatma" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+          <Stack.Screen name="idea" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
           <Stack.Screen name="share" options={{ presentation: 'modal', contentStyle: { backgroundColor: p.dark ? '#0E1A3A' : '#F5F1EA' } }} />
         </Stack>
       </View>

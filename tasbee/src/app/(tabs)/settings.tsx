@@ -76,8 +76,8 @@ export default function Settings() {
 
         <SectionTitle>التسبيع</SectionTitle>
         <Panel>
-          <Txt v="h3" style={{ paddingTop: 12 }}>يوم الجزء الأول</Txt>
-          <Txt v="label">{`اليوم ${P.dayName}: الجزء ${ORDINALS[partIndex(s, P.date)]}. يتغير جزء كل يوم إذا غيّرت هذا.`}</Txt>
+          <Txt v="h3" style={{ paddingTop: 12 }}>يوم الحزب الأول</Txt>
+          <Txt v="label">{`اليوم ${P.dayName}: الحزب ${ORDINALS[partIndex(s, P.date)]}. يتغير حزب كل يوم إذا غيّرت هذا.`}</Txt>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingVertical: 12 }}>
             {WEEK_ORDER.map((d) => (
               <Pressable key={d} onPress={() => { tap(); setSettings({ startDay: d }); }} accessibilityRole="button" accessibilityState={{ selected: s.startDay === d }}
@@ -86,7 +86,7 @@ export default function Settings() {
               </Pressable>
             ))}
           </View>
-          <Txt v="label" style={{ paddingBottom: 12, fontSize: 12.5 }}>كل جزء مقسوم على الصلوات الخمس، وكل جلسة تنتهي بنهاية سورة أو عند ربع حزب.</Txt>
+          <Txt v="label" style={{ paddingBottom: 12, fontSize: 12.5 }}>كل حزب مقسوم على الصلوات الخمس، وكل جلسة تنتهي بنهاية سورة أو عند ربع حزب.</Txt>
         </Panel>
 
         <SectionTitle>المصحف على الهاتف</SectionTitle>
@@ -116,9 +116,10 @@ export default function Settings() {
 
         <SectionTitle>التطبيق</SectionTitle>
         <Panel>
-          <Row first title="شارك التطبيق" sub="رابط ورمز QR" onPress={() => router.push('/share')} right={<ShareIcon size={20} color={p.gold} />} />
+          <Row first title="فكرة التطبيق" sub="على منهاج الصحابة: لماذا سبعة أيام؟" onPress={() => router.push('/idea')} right={<ChevronIcon size={16} color={p.faint} />} />
+          <Row title="شارك التطبيق" sub="رابط ورمز QR" onPress={() => router.push('/share')} right={<ShareIcon size={20} color={p.gold} />} />
           {!confirmReset ? (
-            <Row title="مسح تقدّم اليوم" sub={`الجزء ${ORDINALS[P.d]}، ${P.dayName}`} onPress={() => setConfirmReset(true)} right={<Txt v="meta" color={p.danger}>مسح</Txt>} />
+            <Row title="مسح تقدّم اليوم" sub={`الحزب ${ORDINALS[P.d]}، ${P.dayName}`} onPress={() => setConfirmReset(true)} right={<Txt v="meta" color={p.danger}>مسح</Txt>} />
           ) : (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: 1, borderTopColor: p.rule }}>
               <Txt v="body" style={{ flex: 1 }}>مسح تقدّم اليوم؟</Txt>

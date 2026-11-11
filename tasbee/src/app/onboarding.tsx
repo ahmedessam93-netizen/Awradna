@@ -42,13 +42,26 @@ export default function Onboarding() {
             <Animated.View entering={FadeInDown.delay(300).duration(800)} style={{ alignItems: 'center', marginTop: 12 }}>
               <Txt v="meta" align="center" color={p.gold} style={{ fontSize: 14 }}>تسبيع القرآن الكريم</Txt>
               <Txt v="hero" align="center" style={{ textShadowColor: 'rgba(242,196,107,0.35)', textShadowRadius: 24 }}>قرآن</Txt>
-              <Txt v="body" align="center" style={{ fontSize: 17, lineHeight: 30 }}>ختمة كل أسبوع: جزء كل يوم، في جلسات بعد الصلوات الخمس.</Txt>
+              <Txt v="body" align="center" style={{ fontSize: 17, lineHeight: 30 }}>ختمة كل أسبوع: حزب كل يوم، في جلسات بعد الصلوات الخمس.</Txt>
               <Txt v="meta" align="center" style={{ marginTop: 2, lineHeight: 26 }}>على مصحف المدينة كما طُبع، ويحفظ التطبيق موضعك في كل صفحة.</Txt>
             </Animated.View>
           </Animated.View>
         )}
 
         {step === 1 && (
+          <Animated.View key="s-idea" entering={FadeIn.duration(500)} exiting={FadeOut.duration(200)}>
+            <Txt v="display">على منهاج الصحابة</Txt>
+            <Txt v="meta">أوصى النبي ﷺ بختم القرآن في سبع، وكان كثير من أصحابه يختمونه كل أسبوع، في سبعة أحزاب من سور تامة.</Txt>
+            <Panel style={{ marginTop: 18 }}>
+              <Text maxFontSizeMultiplier={1.3} style={{ fontFamily: F.serif, fontSize: 20, lineHeight: 38, color: p.ink, textAlign: 'center', writingDirection: 'rtl', paddingTop: 12 }}>«فَاقْرَأْهُ فِي سَبْعٍ وَلاَ تَزِدْ عَلَى ذَلِكَ»</Text>
+              <Txt v="label" align="center" color={p.gold} style={{ paddingBottom: 12 }}>صحيح البخاري (٥٠٥٤)</Txt>
+            </Panel>
+            <GlassButton style={{ marginTop: 12 }} label="اقرأ الفكرة والروايات" tone="gold" onPress={() => { tap(); router.push('/idea'); }} />
+            <Txt v="label" style={{ marginTop: 10 }}>تجدها دائمًا في الإعدادات.</Txt>
+          </Animated.View>
+        )}
+
+        {step === 2 && (
           <Animated.View key="s1" entering={FadeIn.duration(500)} exiting={FadeOut.duration(200)}>
             <Txt v="display">أين تصلّي؟</Txt>
             <Txt v="meta">لحساب مواقيت الصلاة على هاتفك، دون إنترنت.</Txt>
@@ -76,10 +89,10 @@ export default function Onboarding() {
           </Animated.View>
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <Animated.View key="s2" entering={FadeIn.duration(500)} exiting={FadeOut.duration(200)}>
             <Txt v="display">يوم البداية</Txt>
-            <Txt v="meta">في أي يوم تقرأ الجزء الأول (من الفاتحة إلى النساء)؟ ثم جزء كل يوم حتى تختم في سبعة أيام.</Txt>
+            <Txt v="meta">في أي يوم تقرأ الحزب الأول (من الفاتحة إلى النساء)؟ ثم حزب كل يوم حتى تختم في سبعة أيام.</Txt>
             <Panel style={{ marginTop: 18 }}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingVertical: 12 }}>
                 {[6, 0, 1, 2, 3, 4, 5].map((d) => (
@@ -107,11 +120,11 @@ export default function Onboarding() {
 
       <View style={{ width: W, alignItems: 'center', gap: 18 }}>
         <View style={{ alignSelf: 'stretch', gap: 10 }}>
-          <GoldButton label={step === 0 ? 'ابدأ' : step === 1 ? 'التالي' : 'تمّ'} onPress={() => { if (step === 1) ensureCity(); if (step < 2) setStep(step + 1); else finish(); }} />
+          <GoldButton label={step === 0 ? 'ابدأ' : step < 3 ? 'التالي' : 'تمّ'} onPress={() => { if (step === 2) ensureCity(); if (step < 3) setStep(step + 1); else finish(); }} />
           {step > 0 ? <GlassButton label="رجوع" onPress={() => setStep(step - 1)} /> : null}
         </View>
-        <View accessible accessibilityLabel={`الخطوة ${step + 1} من ٣`} style={{ flexDirection: 'row', gap: 8 }}>
-          {[0, 1, 2].map((k) => <View key={k} style={{ width: k === step ? 26 : 8, height: 8, borderRadius: 4, backgroundColor: k === step ? p.gold : p.faint, opacity: k === step ? 1 : 0.6 }} />)}
+        <View accessible accessibilityLabel={`الخطوة ${step + 1} من ٤`} style={{ flexDirection: 'row', gap: 8 }}>
+          {[0, 1, 2, 3].map((k) => <View key={k} style={{ width: k === step ? 26 : 8, height: 8, borderRadius: 4, backgroundColor: k === step ? p.gold : p.faint, opacity: k === step ? 1 : 0.6 }} />)}
         </View>
       </View>
     </View>

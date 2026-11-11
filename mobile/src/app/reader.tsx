@@ -135,7 +135,15 @@ export default function Reader() {
   const [zoomed, setZoomed] = useState(zoom > 1);
   const chrome = useSharedValue(1);
   const [chromeOn, setChromeOn] = useState(true);
-  const toggleChrome = useCallback(() => { const v = chromeOn ? 0 : 1; chrome.value = withTiming(v, { duration: 220 }); setChromeOn(!chromeOn); }, [chromeOn]);
+  // The page is read on its own, like the printed book. The controls show for a moment when the
+  // reader opens and whenever the page is tapped; turning the page hides them again.
+  const hideT = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showChrome = useCallback((on: boolean) => {
+    if (hideT.current) { clearTimeout(hideT.current); hideT.current = null; }
+    chrome.value = withTiming(on ? 1 : 0, { duration: 220 }); setChromeOn(on);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { hideT.current = setTimeout(() => showChrome(false), 2600); return () => { if (hideT.current) clearTimeout(hideT.current); }; }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const toggleChrome = useCallback(() => showChrome(!chromeOn), [chromeOn, showChrome]);
   const chromeSt = useAnimatedStyle(() => ({ opacity: chrome.value }));
 
   const finishSitting = (k: number, nextAt?: string) => {
@@ -160,7 +168,7 @@ export default function Reader() {
       if (keys.length) markRead(P.key, keys);
       finishSitting(lastK); tap('success');
     }
-    if (!chromeOn) { chrome.value = withTiming(1); setChromeOn(true); }
+    if (chromeOn) showChrome(false);
   };
   const next = () => pager.current?.setPage(Math.min(idx + 1, items.length - 1));
   const prev = () => pager.current?.setPage(Math.max(idx - 1, 0));

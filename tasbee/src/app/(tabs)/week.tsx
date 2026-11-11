@@ -30,10 +30,10 @@ export default function Week() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(80).duration(600)} style={{ alignItems: 'center', marginTop: 18 }}>
-          <View accessible accessibilityLabel={`أتممت ${cnt(full, 'جزءًا واحدًا', 'جزأين', 'أجزاء')} من سبعة هذا الأسبوع`}>
+          <View accessible accessibilityLabel={`أتممت ${cnt(full, 'حزبًا واحدًا', 'حزبين', 'أحزاب')} من سبعة هذا الأسبوع`}>
             <WeekRosette size={size} names={days.map((x) => x.name)} states={days.map((x) => x.st)}>
               <Text allowFontScaling={false} style={{ fontFamily: F.title, fontSize: 40 * (size / 300), lineHeight: 46 * (size / 300), color: '#F3EAD7', textAlign: 'center' }}>{ar(full)}</Text>
-              <Text allowFontScaling={false} style={{ fontFamily: F.ui, fontSize: 12, lineHeight: 16, color: 'rgba(243,234,215,0.7)', textAlign: 'center' }}>من ٧ أجزاء</Text>
+              <Text allowFontScaling={false} style={{ fontFamily: F.ui, fontSize: 12, lineHeight: 16, color: 'rgba(243,234,215,0.7)', textAlign: 'center' }}>من ٧ أحزاب</Text>
             </WeekRosette>
           </View>
           <Txt v="meta" align="center" style={{ marginTop: 14, fontSize: 15 }}>{state.khatma.count ? `ختمات مكتملة: ${ar(state.khatma.count)}` : 'لم تكتمل ختمة بعد'}</Txt>
@@ -45,12 +45,12 @@ export default function Week() {
               const label = x.st === 'done' ? 'اكتمل' : x.st === 'today' ? `${ar(x.n)} من ٥ جلسات` : x.st === 'missed' ? (x.n ? `${ar(x.n)} من ٥` : 'فات') : PG(Math.round(x.part.w / 15));
               const color = x.st === 'done' ? p.gold : x.st === 'today' ? p.turqHi : p.faint;
               return (
-                <Pressable key={x.key} onPress={() => { tap(); setViewDay(x.today ? null : x.key); router.navigate('/'); }} accessibilityRole="button" accessibilityLabel={`افتح الجزء ${ORDINALS[x.d]}، ${x.name}`}
+                <Pressable key={x.key} onPress={() => { tap(); setViewDay(x.today ? null : x.key); router.navigate('/'); }} accessibilityRole="button" accessibilityLabel={`افتح الحزب ${ORDINALS[x.d]}، ${x.name}`}
                   style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, opacity: pressed ? 0.6 : 1, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: p.rule })}>
                   <Mark size={24} color={x.st === 'done' ? p.gold : x.st === 'today' ? p.turq : p.goldFaint} />
                   <View style={{ flex: 1 }}>
                     <Txt v="body" style={{ fontFamily: x.today ? F.uiBold : F.uiMed, color: x.st === 'future' ? p.muted : p.ink }}>{`${x.name}${x.today ? '، اليوم' : ''}`}</Txt>
-                    <Txt v="label" style={{ lineHeight: 19 }}>{`الجزء ${ORDINALS[x.d]}: ${x.part.name}`}</Txt>
+                    <Txt v="label" style={{ lineHeight: 19 }}>{`الحزب ${ORDINALS[x.d]}: ${x.part.name}`}</Txt>
                   </View>
                   <Text maxFontSizeMultiplier={1.2} style={{ fontFamily: F.ui, fontSize: 13, color }}>{label}</Text>
                   <ChevronIcon size={16} color={p.faint} />
@@ -61,7 +61,7 @@ export default function Week() {
         </Animated.View>
 
         <GlassButton style={{ marginTop: 16 }} label="دعاء ختم القرآن" tone="gold" onPress={() => { tap(); router.push('/khatma'); }} />
-        <Txt v="label" style={{ marginTop: 16, marginHorizontal: 4, lineHeight: 21 }}>لكل يوم جزؤه، ويبدأ بعد الفجر. اضغط أي يوم لتفتحه؛ ما فاتك يبقى متاحًا، وتكتمل الختمة حين تكتمل الأجزاء السبعة.</Txt>
+        <Txt v="label" style={{ marginTop: 16, marginHorizontal: 4, lineHeight: 21 }}>لكل يوم حزبه، ويبدأ بعد الفجر. اضغط أي يوم لتفتحه؛ ما فاتك يبقى متاحًا، وتكتمل الختمة حين تكتمل الأحزاب السبعة.</Txt>
       </View>
     </ScrollView>
   );

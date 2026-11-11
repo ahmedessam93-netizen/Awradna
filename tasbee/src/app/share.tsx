@@ -14,7 +14,7 @@ import { F, usePalette } from '../theme';
 // Sharing gives the Android download page (the iPhone version is opened from the site itself).
 // It lives on GitHub Pages, which opens in Egypt (netlify.app does not).
 const APP_LINK = ANDROID_PAGE;
-const MESSAGE = `قرآن (تسبيع) لأندرويد: ختمة القرآن كل أسبوع، جزء كل يوم في جلسات بعد الصلوات الخمس، على مصحف المدينة.\n${APP_LINK}`;
+const MESSAGE = `قرآن (تسبيع) لأندرويد: ختمة القرآن كل أسبوع، حزب كل يوم في جلسات بعد الصلوات الخمس، على مصحف المدينة.\n${APP_LINK}`;
 
 function QR({ value, size }: { value: string; size: number }) {
   const { d, n } = useMemo(() => {
@@ -47,7 +47,7 @@ export default function ShareScreen() {
           <View style={{ alignItems: 'center', gap: 14, paddingVertical: 14 }}>
             <View style={{ borderRadius: 20, overflow: 'hidden' }}><QR value={APP_LINK} size={Math.min(200, W - 80)} /></View>
             <Text style={{ fontFamily: F.display, fontSize: 22, lineHeight: 30, color: p.goldLight }}>قرآن (تسبيع)</Text>
-            <Txt v="meta" align="center" style={{ lineHeight: 24 }}>تطبيق أندرويد: ختمة كل أسبوع، جزء كل يوم في جلسات بعد الصلوات، مع إشعارات وويدجت.</Txt>
+            <Txt v="meta" align="center" style={{ lineHeight: 24 }}>تطبيق أندرويد: ختمة كل أسبوع، حزب كل يوم في جلسات بعد الصلوات، مع إشعارات وويدجت.</Txt>
             <Text numberOfLines={1} adjustsFontSizeToFit style={{ fontFamily: F.ui, fontSize: 13, color: p.gold, writingDirection: 'ltr' }}>{APP_LINK.replace(/^https:\/\//, '').replace(/\/$/, '')}</Text>
           </View>
         </Panel>

@@ -43,15 +43,15 @@ export default function Today() {
   const w = P.wins[P.nextIdx];
   const isLast = P.nextIdx === 4;
   const placePage = P.at ? Number(P.at.split(':')[1]) : null;
-  const contLabel = placePage ? `تابع من ص ${ar(placePage)}` : `ابدأ الجزء ${ORDINALS[P.d]}`;
+  const contLabel = placePage ? `تابع من ص ${ar(placePage)}` : `ابدأ الحزب ${ORDINALS[P.d]}`;
   const portion = P.part.sittings[P.nextIdx];
   let eyebrow = '', title = '', line = '', cta = '', secondary = false, eyeTone: 'now' | 'done' | 'plain' = 'now';
   if (!isToday && !P.complete) {
     eyebrow = isPast ? (P.readW > 0 ? 'يوم سابق لم يكتمل' : 'يوم سابق') : 'يوم قادم';
-    title = `الجزء ${ORDINALS[P.d]}`;
+    title = `الحزب ${ORDINALS[P.d]}`;
     line = isPast ? `بقي ${PG(Math.max(1, pages(P.left)))}، اقرأها متى شئت.` : `${PG(pages(P.total))}، يبدأ بعد فجر ذلك اليوم. يمكنك قراءته الآن إن شئت.`;
     cta = contLabel; eyeTone = 'plain';
-  } else if (P.complete) { eyebrow = 'اكتمل جزء اليوم'; title = `تمّ الجزء ${ORDINALS[P.d]}`; line = isToday ? 'تقبّل الله. جزء الغد يبدأ بعد الفجر.' : 'تقبّل الله.'; eyeTone = 'done'; }
+  } else if (P.complete) { eyebrow = 'اكتمل حزب اليوم'; title = `تمّ الحزب ${ORDINALS[P.d]}`; line = isToday ? 'تقبّل الله. حزب الغد يبدأ بعد الفجر.' : 'تقبّل الله.'; eyeTone = 'done'; }
   else if (P.curDone && P.nextIdx > P.cur) { eyebrow = `أتممت جلسة ${P.wins[P.cur].name}`; title = `القادمة: جلسة ${w.name}`; line = `بعد صلاة ${w.name}، ${fmtTime(w.time)}`; cta = contLabel; secondary = true; eyeTone = 'done'; }
   else {
     eyebrow = `الآن، بعد صلاة ${w.name}`;
@@ -125,8 +125,8 @@ export default function Today() {
 
         <Animated.View entering={FadeInDown.delay(60).duration(600)} style={{ alignItems: 'center', marginTop: 16 }}>
           <Ring size={ring} shares={P.part.sittings.map((s) => s.w)} done={[0, 1, 2, 3, 4].map((k) => P.complete || !!P.done[k])} partial={partial} current={P.complete ? -1 : P.nextIdx}
-            label={`الجزء ${ORDINALS[P.d]}: قُرئ ${ar(pages(P.readW))} من ${ar(pages(P.total))} صفحة`}>
-            <Txt v="label" align="center" color={p.gold}>{`الجزء ${ORDINALS[P.d]} من سبعة`}</Txt>
+            label={`الحزب ${ORDINALS[P.d]}: قُرئ ${ar(pages(P.readW))} من ${ar(pages(P.total))} صفحة`}>
+            <Txt v="label" align="center" color={p.gold}>{`الحزب ${ORDINALS[P.d]} من سبعة`}</Txt>
             <Text maxFontSizeMultiplier={1.2} style={{ fontFamily: F.title, fontSize: ring * 0.085, lineHeight: ring * 0.13, color: p.ink, textAlign: 'center', marginHorizontal: ring * 0.16 }}>{P.part.name}</Text>
             {P.complete ? (
               <Txt v="meta" align="center" color={p.gold}>تمّ، تقبّل الله</Txt>
@@ -146,7 +146,7 @@ export default function Today() {
           <View style={{ alignSelf: 'stretch', marginTop: 16, gap: 10 }}>
             {cta && !secondary ? <GoldButton label={cta} icon={<BookIcon size={22} color={p.onPrimary} />} onPress={cont} /> : null}
             {cta && secondary ? <GlassButton label={cta} tone="gold" onPress={cont} /> : null}
-            {P.complete ? <GlassButton label="مراجعة الجزء" tone="gold" onPress={() => read({ seg: '0' })} /> : null}
+            {P.complete ? <GlassButton label="مراجعة الحزب" tone="gold" onPress={() => read({ seg: '0' })} /> : null}
           </View>
         </Animated.View>
 
@@ -182,11 +182,14 @@ export default function Today() {
             <Text allowFontScaling={false} style={{ fontFamily: F.title, fontSize: 26, color: p.gold }}>{ar(state.khatma.count + 1)}</Text>
             <View style={{ flex: 1 }}>
               <Txt v="body" style={{ fontFamily: F.uiMed, fontSize: 15.5, lineHeight: 23 }}>{state.khatma.count ? `الختمة رقم ${ar(state.khatma.count + 1)}` : 'ختمتك الأولى'}</Txt>
-              <Txt v="label" style={{ fontSize: 12.5, lineHeight: 18 }}>{`هذا الأسبوع: ${weekDone === 0 ? 'لم يكتمل جزء بعد' : `${ar(weekDone)} من ٧ أجزاء`}`}</Txt>
+              <Txt v="label" style={{ fontSize: 12.5, lineHeight: 18 }}>{`هذا الأسبوع: ${weekDone === 0 ? 'لم يكتمل حزب بعد' : `${ar(weekDone)} من ٧ أحزاب`}`}</Txt>
             </View>
             <ChevronIcon size={18} color={p.faint} />
           </Pressable>
         </Animated.View>
+        <Pressable onPress={() => { tap(); router.push('/idea'); }} accessibilityRole="button" hitSlop={8} style={{ marginTop: 18, alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 14 }}>
+          <Txt v="label" align="center" color={p.gold} style={{ fontSize: 13.5 }}>على منهاج الصحابة: لماذا سبعة أيام؟</Txt>
+        </Pressable>
       </View>
     </ScrollView>
   );

@@ -39,7 +39,7 @@ export function TasbeeWidget({ s, size = 'medium' }: { s: Snapshot; size?: 'smal
     return (
       <FlexWidget clickAction="OPEN_APP" style={{ ...shell, padding: 10, flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <SvgWidget svg={ringSvg(84, s.progress, s.complete)} style={{ width: 84, height: 84 }} />
-        <TextWidget text={s.complete ? 'تمّ جزء اليوم' : s.title} style={{ fontFamily: F.kufi, fontSize: 14, color: s.complete ? C.gold : C.ivory, textAlign: 'center', marginTop: 4 }} />
+        <TextWidget text={s.complete ? 'تمّ حزب اليوم' : s.title} style={{ fontFamily: F.kufi, fontSize: 14, color: s.complete ? C.gold : C.ivory, textAlign: 'center', marginTop: 4 }} />
         <TextWidget text={s.detail} maxLines={1} truncate="END" style={{ fontFamily: F.uiReg, fontSize: 10.5, color: C.muted, textAlign: 'center' }} />
       </FlexWidget>
     );
@@ -48,7 +48,7 @@ export function TasbeeWidget({ s, size = 'medium' }: { s: Snapshot; size?: 'smal
     <FlexWidget clickAction="OPEN_APP" style={{ ...shell, paddingVertical: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center' }}>
       <FlexWidget style={{ flex: 1, flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 8 }}>
         <TextWidget text={s.day} style={{ fontFamily: F.ui, fontSize: 12, color: C.gold, textAlign: 'right' }} />
-        <TextWidget text={s.complete ? 'تمّ جزء اليوم، تقبّل الله' : s.title} style={{ fontFamily: F.kufi, fontSize: 17, color: C.ivory, textAlign: 'right' }} />
+        <TextWidget text={s.complete ? 'تمّ حزب اليوم، تقبّل الله' : s.title} style={{ fontFamily: F.kufi, fontSize: 17, color: C.ivory, textAlign: 'right' }} />
         <TextWidget text={s.detail} maxLines={2} truncate="END" style={{ fontFamily: F.title, fontSize: 14, color: C.ivory, textAlign: 'right', lineHeight: 22 }} />
         <FlexWidget style={{ height: 1, width: 'match_parent', backgroundColor: C.line, marginTop: 6, marginBottom: 4 }} />
         <TextWidget text={s.next ? `التالية: ${s.next}` : ''} style={{ fontFamily: F.uiReg, fontSize: 11, color: C.turq, textAlign: 'right' }} />

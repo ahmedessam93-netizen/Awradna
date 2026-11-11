@@ -169,7 +169,7 @@ export default function Reader() {
   const pos = cur.kind === 'page' ? group.findIndex((x) => x.it.key === cur.it.key) : group.length;
   const pageNo = cur.kind === 'page' ? cur.it.page : 0;
   const isLastOfSeg = !free && cur.kind === 'page' && cur.it.last;
-  const nextLabel = isLastOfSeg ? (k === 4 ? 'إتمام الجزء' : 'إتمام الجلسة') : 'التالية';
+  const nextLabel = isLastOfSeg ? (k === 4 ? 'إتمام الحزب' : 'إتمام الجلسة') : 'التالية';
   const otherDay = !!params.day && params.day !== planForDay(state, null, new Date()).key;
   const names = cur.kind === 'page' ? surahsOn(pageNo).map((n) => `سورة ${surahName(n)}`).join('، ') : '';
   const title = free ? names : `${otherDay ? `${P.dayName}، ` : ''}جلسة ${P.wins[k]?.name ?? ''}`;
@@ -194,9 +194,9 @@ export default function Reader() {
   const finInfo = () => {
     const done = state.days[P.key]?.done || {};
     const missing = [0, 1, 2, 3, 4].filter((j) => !done[j]).map((j) => P.wins[j].name);
-    if (missing.length) return { title: `أتممتَ جلسة ${P.wins[4].name}`, line: `بقي من الجزء ${ORDINALS[P.d]}: ${missing.length > 1 ? 'جلسات' : 'جلسة'} ${missing.join('، ')}. اضغطها في الصفحة الرئيسية متى شئت.` };
+    if (missing.length) return { title: `أتممتَ جلسة ${P.wins[4].name}`, line: `بقي من الحزب ${ORDINALS[P.d]}: ${missing.length > 1 ? 'جلسات' : 'جلسة'} ${missing.join('، ')}. اضغطها في الصفحة الرئيسية متى شئت.` };
     if (khatmaNew) return { title: 'ختمتَ القرآن الكريم', line: `ختمة رقم ${ar(state.khatma.count)}. اللهم اجعل القرآن العظيم ربيع قلوبنا.` };
-    return { title: `تمّ الجزء ${ORDINALS[P.d]}`, line: P.d === 6 ? 'بقيت أجزاء من هذا الأسبوع لم تكتمل، فأتمّها لتكتمل الختمة.' : `الجزء ${ORDINALS[(P.d + 1) % 7]} غدًا بعد الفجر.` };
+    return { title: `تمّ الحزب ${ORDINALS[P.d]}`, line: P.d === 6 ? 'بقيت أحزاب من هذا الأسبوع لم تكتمل، فأتمّها لتكتمل الختمة.' : `الحزب ${ORDINALS[(P.d + 1) % 7]} غدًا بعد الفجر.` };
   };
 
   return (

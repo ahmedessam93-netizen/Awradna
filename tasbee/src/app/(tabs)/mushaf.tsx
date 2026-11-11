@@ -5,10 +5,10 @@ import { Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } fro
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookIcon, SearchIcon } from '../../components/icons';
-import { GoldButton, Panel, Segmented, Txt, useTap } from '../../components/ui';
-import { ar } from '../../core/plan';
+import { GlassButton, GoldButton, Panel, Segmented, Txt, useTap } from '../../components/ui';
+import { ar, ORDINALS } from '../../core/plan';
 import { useStore } from '../../core/store';
-import { juzOf, Q, surahName, surahsOn } from '../../quran';
+import { juzOf, PARTS, Q, surahName, surahsOn } from '../../quran';
 import { F, usePalette } from '../../theme';
 
 // the page where each juz begins
@@ -19,7 +19,7 @@ export default function Mushaf() {
   const p = usePalette(); const tap = useTap(); const insets = useSafeAreaInsets(); const { width } = useWindowDimensions();
   const { state } = useStore();
   const W = Math.min(width, 520) - 48;
-  const [view, setView] = useState<'surah' | 'juz'>('surah');
+  const [view, setView] = useState<'surah' | 'juz' | 'hizb'>('surah');
   const [q, setQ] = useState('');
   const open = (page: number) => { tap('medium'); router.push({ pathname: '/reader', params: { mode: 'mushaf', page: String(page) } }); };
   const last = state.mushafPage;
@@ -28,6 +28,9 @@ export default function Mushaf() {
     return Q.surahs.map((s, i) => ({ n: i + 1, name: s[0], page: s[1], verses: s[2] }))
       .filter((s) => !n || norm(s.name).includes(n) || String(s.n) === q.trim());
   }, [q]);
+  // a page number typed in the search box (Arabic or Latin digits) opens that page
+  const digits = q.trim().replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+  const goPage = /^\d{1,3}$/.test(digits) && +digits >= 1 && +digits <= 604 ? +digits : null;
 
   return (
     <ScrollView contentContainerStyle={{ paddingTop: insets.top + 14, paddingBottom: insets.bottom + 130, paddingHorizontal: 24, alignItems: 'center' }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -42,16 +45,19 @@ export default function Mushaf() {
         <Txt v="label" style={{ marginTop: 8 }}>قراءة حرة خارج جلسات التسبيع، وتُحفظ صفحتها وحدها.</Txt>
 
         <View style={{ marginTop: 18, alignItems: 'flex-start' }}>
-          <Segmented value={view} onChange={(v) => setView(v)} options={[{ v: 'surah', label: 'السور' }, { v: 'juz', label: 'الأجزاء' }]} />
+          <Segmented value={view} onChange={(v) => setView(v)} options={[{ v: 'surah', label: 'السور' }, { v: 'juz', label: 'الأجزاء' }, { v: 'hizb', label: 'الأحزاب السبعة' }]} />
         </View>
 
         {view === 'surah' ? (
           <>
             <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8, height: 46, paddingHorizontal: 14, borderRadius: 16, borderWidth: 1, borderColor: p.chipBorder, backgroundColor: p.chip }}>
               <SearchIcon size={18} color={p.faint} />
-              <TextInput value={q} onChangeText={setQ} placeholder="ابحث عن سورة" placeholderTextColor={p.faint} accessibilityLabel="ابحث عن سورة"
+              <TextInput value={q} onChangeText={setQ} placeholder="اسم سورة، أو رقم صفحة" placeholderTextColor={p.faint} accessibilityLabel="ابحث عن سورة أو اكتب رقم صفحة"
                 style={{ flex: 1, fontFamily: F.ui, fontSize: 15.5, color: p.ink, textAlign: 'right', writingDirection: 'rtl', paddingVertical: 0 }} />
             </View>
+            {goPage ? (
+              <GlassButton style={{ marginTop: 12 }} tone="gold" label={`افتح الصفحة ${ar(goPage)}، سورة ${surahName(surahsOn(goPage)[0])}`} onPress={() => open(goPage)} />
+            ) : null}
             <Panel style={{ marginTop: 12 }} padding={6}>
               {list.map((s, i) => (
                 <Pressable key={s.n} onPress={() => open(s.page)} accessibilityRole="button" accessibilityLabel={`سورة ${s.name}، صفحة ${ar(s.page)}`}
@@ -67,6 +73,20 @@ export default function Mushaf() {
               {!list.length ? <Txt v="meta" align="center" style={{ paddingVertical: 18 }}>لا توجد سورة بهذا الاسم</Txt> : null}
             </Panel>
           </>
+        ) : view === 'hizb' ? (
+          <Panel style={{ marginTop: 12 }} padding={6}>
+            {PARTS.map((part, d) => (
+              <Pressable key={d} onPress={() => open(part.pages[0])} accessibilityRole="button" accessibilityLabel={`الحزب ${ORDINALS[d]}: ${part.name}، صفحة ${ar(part.pages[0])}`}
+                style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 10, opacity: pressed ? 0.6 : 1, borderTopWidth: d === 0 ? 0 : 1, borderTopColor: p.rule })}>
+                <Text allowFontScaling={false} style={{ width: 34, textAlign: 'center', fontFamily: F.title, fontSize: 16, color: p.gold }}>{ar(d + 1)}</Text>
+                <View style={{ flex: 1 }}>
+                  <Txt v="body" style={{ fontFamily: F.uiMed }}>{part.name}</Txt>
+                  <Txt v="label">{`الحزب ${ORDINALS[d]}، ${ar(part.pages[1] - part.pages[0] + 1)} صفحة`}</Txt>
+                </View>
+                <Text maxFontSizeMultiplier={1.2} style={{ fontFamily: F.ui, fontSize: 13, color: p.muted }}>{`ص ${ar(part.pages[0])}`}</Text>
+              </Pressable>
+            ))}
+          </Panel>
         ) : (
           <View style={{ marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {JUZ_PAGES.map((pg, j) => (
