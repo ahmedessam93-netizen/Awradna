@@ -112,6 +112,7 @@ export default function Settings() {
           <Row title="حجم الصفحة" right={<Segmented value={s.pageZoom || 1} onChange={(v) => setSettings({ pageZoom: v })} options={[{ v: 1, label: 'عادي' }, { v: 1.25, label: 'كبير' }, { v: 1.5, label: 'أكبر' }]} />} />
           <Row title="إبقاء الشاشة مضاءة" sub="أثناء القراءة" right={<Toggle label="إبقاء الشاشة مضاءة" value={s.wake !== false} onChange={(v) => setSettings({ wake: v })} />} />
           <Row title="اهتزاز خفيف" sub="عند اللمس، ومع كل حبة في المسبحة" right={<Toggle label="الاهتزاز" value={s.haptics !== false} onChange={(v) => setSettings({ haptics: v })} />} />
+          <Row title="المساعدة في تحسين التطبيق" sub="عدّ مجهول لما يُستعمل، وتقارير الأعطال. بلا اسم ولا حساب ولا موقع." right={<Toggle label="المساعدة في تحسين التطبيق" value={s.share !== false} onChange={(v) => setSettings({ share: v })} />} />
         </Panel>
 
         <SectionTitle>أورادنا</SectionTitle>

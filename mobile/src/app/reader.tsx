@@ -16,6 +16,7 @@ import { prefetchPages } from '../core/prefetch';
 import { ar, fmtTime, mins, MN, PG, planForDay } from '../core/plan';
 import { itemRead, RItem } from '../core/sittings';
 import { useStore } from '../core/store';
+import { track } from '../core/track';
 import { F, usePalette } from '../theme';
 
 function KeepAwake() { useKeepAwake(); return null; }
@@ -56,6 +57,7 @@ export default function Reader() {
   // Neither: continue from the saved place.
   const params = useLocalSearchParams<{ day?: string; seg?: string; page?: string }>();
   const { state, markRead, markSitting, completeDay, setSettings, setPlace } = useStore();
+  useEffect(() => { track('reader_open'); }, []);
 
   // The day's sittings are fixed, so the reader holds the whole day and you can move freely in it.
   const P = useMemo(() => planForDay(state, params.day || null, new Date()), []); // eslint-disable-line react-hooks/exhaustive-deps

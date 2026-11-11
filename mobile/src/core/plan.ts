@@ -14,6 +14,8 @@ export type Settings = {
   sittings: number; fajrHeavy: boolean; parts: Record<string, boolean>;
   offset: number; remType: string; fixed: string[]; notif?: boolean; onboarded?: boolean;
   city?: number | 'geo'; cityName?: string; theme?: 'auto' | 'light' | 'dark'; wake?: boolean; haptics?: boolean;
+  /** share anonymous use and error reports (on unless turned off); anon: a random number for this install */
+  share?: boolean; anon?: string;
   travel?: boolean; pageZoom?: number;
 };
 // read: pages (or page halves, 'id~u' / 'id~f') read. done: sittings completed. at: the saved place (a reader item key).
