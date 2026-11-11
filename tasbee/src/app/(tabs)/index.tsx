@@ -3,10 +3,9 @@ import React, { useMemo } from 'react';
 import { Linking, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BookIcon, ChevronIcon, PinIcon } from '../../components/icons';
-import { Orb, PrayerPath } from '../../components/PrayerPath';
-import { Ring } from '../../components/Ring';
-import { GlassButton, GoldButton, Mark, Panel, Stat, Txt, useTap } from '../../components/ui';
+import { BookIcon, BookmarkIcon, ChevronIcon, LampIcon, PinIcon, PRAYER_ICONS, StarIcon } from '../../components/icons';
+import { Head, HeroButton, HeroCard, SitRow, StripDay, Tiles, Timeline, WeekStrip } from '../../components/dash';
+import { Panel, Stat, Txt, useTap } from '../../components/ui';
 import { addDays, ar, DAY_NAMES, dkey, fmtTime, MN, ORDINALS, PG, plan, sitLabel, sitPages, streak, weekOf } from '../../core/plan';
 import { useStore, useViewPlan } from '../../core/store';
 import { useUpdate } from '../../core/update';
@@ -18,6 +17,7 @@ function hijri(d: Date) {
   try { return new Intl.DateTimeFormat('ar-EG-u-ca-islamic-umalqura-nu-arab', { day: 'numeric', month: 'long', year: 'numeric' }).format(d).replace(/\s?هـ$/, ''); } catch { return ''; }
 }
 const pages = (lines: number) => Math.round(lines / 15);
+const SHORT = ['أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
 
 export default function Today() {
   const p = usePalette(); const P = useViewPlan(); const { state, now, setViewDay } = useStore(); const tap = useTap();
@@ -27,16 +27,10 @@ export default function Today() {
   const insets = useSafeAreaInsets(); const { width } = useWindowDimensions();
   const update = useUpdate();
   const W = Math.min(width, 520) - 48;
-  const ring = Math.min(W, 320);
 
   const read = (params: Record<string, string>) => { tap('medium'); router.push({ pathname: '/reader', params: { day: P.key, ...params } }); };
   const cont = () => read({});
   const openSitting = (k: number) => read({ seg: String(k) });
-  const shiftDay = (n: number) => {
-    const [y, m, d] = P.key.split('-').map(Number);
-    const k = dkey(addDays(new Date(y, m - 1, d), n));
-    tap(); setViewDay(k === todayKey ? null : k);
-  };
   const [ty, tm, td] = todayKey.split('-').map(Number);
   const offset = Math.round((+new Date(P.date) - +new Date(ty, tm - 1, td)) / 864e5);
 
@@ -60,11 +54,14 @@ export default function Today() {
     cta = contLabel;
   }
 
-  const orbs: Orb[] = P.wins.map((x, k) => {
+  // the five sittings of the day, one after each prayer
+  const rows: SitRow[] = P.wins.map((x, k) => {
     const done = P.complete || !!P.done[k];
     const passed = isPast || (isToday && !!x.time && x.time <= now);
-    if (!isToday) return { i: x.i, name: x.name, time: x.time, state: done ? 'done' : isPast ? 'missed' : 'upcoming' };
-    return { i: x.i, name: x.name, time: x.time, state: done ? 'done' : k === P.nextIdx && !P.complete ? 'current' : passed && k < P.cur ? 'missed' : 'upcoming' };
+    const st: SitRow['state'] = done ? 'done' : !isToday ? (isPast ? 'missed' : 'upcoming') : k === P.nextIdx ? 'now' : passed && k < P.cur ? 'missed' : 'upcoming';
+    return { key: String(k), Icon: PRAYER_ICONS[k], title: `جلسة ${x.name}`, sub: `${sitLabel(P.part, k)}، ${PG(sitPages(P.part, k))}`,
+      right: st === 'done' ? 'تمّ' : st === 'now' ? 'الآن' : st === 'missed' ? 'فاتت' : x.time ? fmtTime(x.time) : `ص ${ar(P.part.sittings[k].from[0])}`, state: st, onPress: () => openSitting(k),
+      a11y: `جلسة ${x.name}: ${sitLabel(P.part, k)}` };
   });
 
   const week = weekOf(state, P);
@@ -72,33 +69,21 @@ export default function Today() {
   const run = useMemo(() => streak(state, plan(state, now)), [state, now]);
   // the parts of this week that were left unfinished on their days
   const missed = isToday ? week.filter((x) => !x.full && x.key < P.key) : [];
-  const partial = (() => {
-    if (!P.at) return 0;
-    const [ak, ap] = P.at.split(':').map(Number);
-    if (ak !== P.nextIdx) return 0;
-    const st = P.part.sittings[ak];
-    return (ap - st.from[0]) / (st.to[0] - st.from[0] + 1);
-  })();
-
+  const strip: StripDay[] = week.map((x) => ({ key: x.key, name: SHORT[x.date.getDay()], num: ar(x.d + 1), frac: x.n / 5, full: x.full, today: x.key === todayKey, selected: x.key === P.key,
+    a11y: `الحزب ${ORDINALS[x.d]}، ${DAY_NAMES[x.date.getDay()]}${x.key === todayKey ? '، اليوم' : ''}${x.full ? '، مكتمل' : ''}` }));
   const city = state.settings.cityName || '';
   const g = P.date;
   const dateLine = [hijri(g), `${ar(g.getDate())} ${MONTHS[g.getMonth()]}`].filter(Boolean).join('، ');
 
   return (
-    <ScrollView contentContainerStyle={{ paddingTop: insets.top + 14, paddingBottom: insets.bottom + 130, paddingHorizontal: 24, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={{ paddingTop: insets.top + 14, paddingBottom: insets.bottom + 150, paddingHorizontal: 24, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
       <View style={{ width: W }}>
+        {/* header: the date, the day's part, the city */}
         <Animated.View entering={FadeInDown.duration(500)} style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <View style={{ flex: 1 }}>
             <Txt v="label">{offset === 0 ? dateLine : `${offset === -1 ? 'أمس' : offset === 1 ? 'غدًا' : offset < 0 ? 'يوم سابق' : 'يوم قادم'}، ${dateLine}`}</Txt>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Pressable onPress={() => shiftDay(-1)} disabled={offset <= -6} hitSlop={10} accessibilityRole="button" accessibilityLabel="اليوم السابق" style={{ opacity: offset <= -6 ? 0.3 : 1 }}>
-                <ChevronIcon dir="right" size={22} color={p.gold} />
-              </Pressable>
-              <Txt v="display" style={{ flexShrink: 1 }} numberOfLines={1} adjustsFontSizeToFit>{`${P.dayName}`}</Txt>
-              <Pressable onPress={() => shiftDay(1)} disabled={offset >= 6} hitSlop={10} accessibilityRole="button" accessibilityLabel="اليوم التالي" style={{ opacity: offset >= 6 ? 0.3 : 1 }}>
-                <ChevronIcon size={22} color={p.gold} />
-              </Pressable>
-            </View>
+            <Txt v="display" numberOfLines={1} adjustsFontSizeToFit>{`الحزب ${ORDINALS[P.d]}`}</Txt>
+            <Txt v="meta" numberOfLines={1}>{P.part.name}</Txt>
           </View>
           {city ? (
             <Pressable onPress={() => { tap(); router.push('/city'); }} accessibilityRole="button" accessibilityLabel={`المدينة: ${city}`}
@@ -109,12 +94,11 @@ export default function Today() {
           ) : null}
         </Animated.View>
 
-        {!isToday ? (
-          <Pressable onPress={() => { tap(); setViewDay(null); }} accessibilityRole="button"
-            style={{ marginTop: 10, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, height: 36, borderRadius: 18, backgroundColor: p.turqSoft, borderWidth: 1, borderColor: p.turq }}>
-            <Text style={{ fontFamily: F.uiBold, fontSize: 13.5, color: p.turqHi }}>العودة إلى اليوم</Text>
-          </Pressable>
-        ) : null}
+        {/* the seven parts of the week: tap one to open it */}
+        <Animated.View entering={FadeInDown.delay(40).duration(500)}>
+          <WeekStrip days={strip} onPick={(k) => setViewDay(k === todayKey ? null : k)} />
+        </Animated.View>
+
         {update ? (
           <Pressable onPress={() => { tap(); Linking.openURL(update.url); }} accessibilityRole="button" accessibilityLabel="تحديث التطبيق"
             style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: p.turqSoft, borderWidth: 1, borderColor: p.turq }}>
@@ -126,36 +110,25 @@ export default function Today() {
           </Pressable>
         ) : null}
 
-        <Animated.View entering={FadeInDown.delay(60).duration(600)} style={{ alignItems: 'center', marginTop: 16 }}>
-          <Ring size={ring} shares={P.part.sittings.map((s) => s.w)} done={[0, 1, 2, 3, 4].map((k) => P.complete || !!P.done[k])} partial={partial} current={P.complete ? -1 : P.nextIdx}
-            label={`الحزب ${ORDINALS[P.d]}: قُرئ ${ar(pages(P.readW))} من ${ar(pages(P.total))} صفحة`}>
-            <Txt v="label" align="center" color={p.gold}>{`الحزب ${ORDINALS[P.d]} من سبعة`}</Txt>
-            <Text maxFontSizeMultiplier={1.2} style={{ fontFamily: F.title, fontSize: ring * 0.085, lineHeight: ring * 0.13, color: p.ink, textAlign: 'center', marginHorizontal: ring * 0.16 }}>{P.part.name}</Text>
-            {P.complete ? (
-              <Txt v="meta" align="center" color={p.gold}>تمّ، تقبّل الله</Txt>
-            ) : (
-              <Txt v="meta" align="center">{pages(P.readW) > 0 ? `بقي ${PG(Math.max(1, pages(P.left)))} من ${ar(pages(P.total))}` : PG(pages(P.total))}</Txt>
-            )}
-          </Ring>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(120).duration(600)} style={{ alignItems: 'center', marginTop: 6 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: eyeTone === 'now' ? p.turq : eyeTone === 'done' ? p.gold : p.faint }} />
-            <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: F.ui, fontSize: 14, lineHeight: 20, color: eyeTone === 'now' ? p.turqHi : eyeTone === 'done' ? p.gold : p.muted }}>{eyebrow}</Text>
-          </View>
-          <Txt v="h1" align="center" style={{ marginTop: 4 }}>{title}</Txt>
-          {line ? <Txt v="meta" align="center" style={{ fontSize: 15, lineHeight: 24 }}>{line}</Txt> : null}
-          <View style={{ alignSelf: 'stretch', marginTop: 16, gap: 10 }}>
-            {cta && !secondary ? <GoldButton label={cta} icon={<BookIcon size={22} color={p.onPrimary} />} onPress={cont} /> : null}
-            {cta && secondary ? <GlassButton label={cta} tone="gold" onPress={cont} /> : null}
-            {P.complete ? <GlassButton label="مراجعة الحزب" tone="gold" onPress={() => read({ seg: '0' })} /> : null}
-          </View>
+        {/* the day's card: what is due now, how far along, and the way in */}
+        <Animated.View entering={FadeInDown.delay(80).duration(600)}>
+          <HeroCard style={{ marginTop: 16 }} eyebrow={eyebrow} tone={eyeTone} title={title} line={line} done={P.complete}
+            frac={P.total ? P.readW / P.total : 0} big={ar(Math.max(1, pages(P.left)))} small={P.readW > 0 ? 'صفحة باقية' : 'صفحة'}>
+            {cta && !secondary ? <HeroButton label={cta} icon={<BookIcon size={22} color="#2A1D07" />} onPress={cont} /> : null}
+            {cta && secondary ? <HeroButton quiet label={cta} onPress={cont} /> : null}
+            {P.complete ? <HeroButton quiet label="مراجعة ما قرأت" onPress={() => read({ seg: '0' })} /> : null}
+          </HeroCard>
+          {!isToday ? (
+            <Pressable onPress={() => { tap(); setViewDay(null); }} accessibilityRole="button"
+              style={{ marginTop: 12, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, height: 38, borderRadius: 19, backgroundColor: p.turqSoft, borderWidth: 1, borderColor: p.turq }}>
+              <Text style={{ fontFamily: F.uiBold, fontSize: 13.5, color: p.turqHi }}>العودة إلى اليوم</Text>
+            </Pressable>
+          ) : null}
         </Animated.View>
 
         {/* a row of small facts: the run of days, this week, the khatmas */}
-        <Animated.View entering={FadeInDown.delay(150).duration(600)}>
-          <Panel style={{ marginTop: 22 }} padding={8}>
+        <Animated.View entering={FadeInDown.delay(130).duration(600)}>
+          <Panel style={{ marginTop: 16 }} padding={8}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Stat value={ar(run)} label={run === 1 ? 'يوم متتالٍ' : 'أيام متتالية'} tone={run > 0 ? 'gold' : undefined} />
               <View style={{ width: 1, height: 34, backgroundColor: p.rule }} />
@@ -166,14 +139,21 @@ export default function Today() {
           </Panel>
         </Animated.View>
 
+        {/* the day's sittings */}
+        <Animated.View entering={FadeInDown.delay(180).duration(600)}>
+          <Head title="جلسات اليوم" />
+          <Panel padding={14}>
+            <View style={{ paddingVertical: 6 }}><Timeline rows={rows} /></View>
+          </Panel>
+        </Animated.View>
+
         {missed.length ? (
-          <Animated.View entering={FadeInDown.delay(170).duration(600)}>
-            <Panel style={{ marginTop: 14 }}>
-              <Txt v="h2" style={{ marginTop: 10 }}>ما فاتك هذا الأسبوع</Txt>
-              <Txt v="label" style={{ marginBottom: 4 }}>اقرأه متى تيسّر لتكتمل الختمة.</Txt>
+          <Animated.View entering={FadeInDown.delay(220).duration(600)}>
+            <Head title="ما فاتك هذا الأسبوع" />
+            <Panel>
               {missed.map((x, i) => (
                 <Pressable key={x.key} onPress={() => { tap(); setViewDay(x.key); }} accessibilityRole="button" accessibilityLabel={`افتح الحزب ${ORDINALS[x.d]}، ${DAY_NAMES[x.date.getDay()]}`}
-                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, opacity: pressed ? 0.6 : 1, borderTopWidth: 1, borderTopColor: p.rule })}>
+                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, opacity: pressed ? 0.6 : 1, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: p.rule })}>
                   <View style={{ flex: 1 }}>
                     <Txt v="body" style={{ fontFamily: F.uiMed }}>{`الحزب ${ORDINALS[x.d]}: ${x.part.name}`}</Txt>
                     <Txt v="label">{`${DAY_NAMES[x.date.getDay()]}، ${x.n ? `قرأت ${ar(x.n)} من ٥ جلسات` : 'لم يبدأ'}`}</Txt>
@@ -186,46 +166,16 @@ export default function Today() {
           </Animated.View>
         ) : null}
 
-        <Animated.View entering={FadeInDown.delay(180).duration(600)} style={{ marginTop: 30 }}>
-          <PrayerPath orbs={orbs} width={W} onPress={openSitting} />
-          <Txt v="label" align="center" style={{ marginTop: 2 }}>اضغط أي صلاة لقراءة جلستها، ولو فاتت.</Txt>
+        {/* shortcuts */}
+        <Animated.View entering={FadeInDown.delay(260).duration(600)}>
+          <Head title="المزيد" />
+          <Tiles items={[
+            { key: 'mushaf', icon: <BookIcon size={22} color={p.goldLight} />, title: 'المصحف', sub: state.mushafPage ? `تابع من الصفحة ${ar(state.mushafPage)}` : 'اقرأ من أي موضع', onPress: () => router.push({ pathname: '/reader', params: { mode: 'mushaf', page: String(state.mushafPage || 1) } }) },
+            { key: 'marks', icon: <BookmarkIcon size={22} color={p.goldLight} />, title: 'علاماتك', sub: (state.bookmarks || []).length ? PG((state.bookmarks || []).length) : 'لا علامات بعد', onPress: () => router.navigate('/mushaf') },
+            { key: 'dua', icon: <StarIcon size={22} color={p.goldLight} />, title: 'دعاء ختم القرآن', sub: 'يُقرأ عند تمام الختمة', onPress: () => router.push('/khatma') },
+            { key: 'idea', icon: <LampIcon size={22} color={p.goldLight} />, title: 'على منهاج الصحابة', sub: 'لماذا سبعة أيام؟', onPress: () => router.push('/idea') },
+          ]} />
         </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(240).duration(600)}>
-          <Panel style={{ marginTop: 20 }}>
-            <Txt v="h2" style={{ marginTop: 10, marginBottom: 2 }}>جلسات اليوم</Txt>
-            {P.part.sittings.map((st, k) => {
-              const done = P.complete || !!P.done[k];
-              const now_ = isToday && !P.complete && k === P.nextIdx;
-              return (
-                <Pressable key={k} accessibilityRole="button" accessibilityLabel={`جلسة ${P.wins[k].name}: ${sitLabel(P.part, k)}`} onPress={() => openSitting(k)}
-                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 13, opacity: pressed ? 0.7 : 1, borderTopWidth: k === 0 ? 0 : 1, borderTopColor: p.rule })}>
-                  <Mark color={done ? p.gold : now_ ? p.turq : p.goldFaint} />
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Txt v="body" style={{ fontFamily: F.uiMed, lineHeight: 24 }}>{`بعد ${P.wins[k].name}`}</Txt>
-                    <Txt v="label" style={{ lineHeight: 19 }} numberOfLines={2}>{`${sitLabel(P.part, k)}، ${PG(sitPages(P.part, k))}`}</Txt>
-                  </View>
-                  <Text maxFontSizeMultiplier={1.2} style={{ fontFamily: F.ui, fontSize: 13, color: done ? p.gold : now_ ? p.turqHi : p.faint }}>{done ? 'تمّ' : now_ ? 'الآن' : `ص ${ar(st.from[0])}`}</Text>
-                </Pressable>
-              );
-            })}
-          </Panel>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(300).duration(600)}>
-          <Pressable onPress={() => { tap(); router.navigate('/week'); }} accessibilityRole="button"
-            style={({ pressed }) => ({ marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, paddingHorizontal: 18, borderRadius: 20, borderWidth: 1, borderStyle: 'dashed', borderColor: p.goldFaint, backgroundColor: pressed ? p.chip : 'transparent' })}>
-            <Text allowFontScaling={false} style={{ fontFamily: F.title, fontSize: 26, color: p.gold }}>{ar(state.khatma.count + 1)}</Text>
-            <View style={{ flex: 1 }}>
-              <Txt v="body" style={{ fontFamily: F.uiMed, fontSize: 15.5, lineHeight: 23 }}>{state.khatma.count ? `الختمة رقم ${ar(state.khatma.count + 1)}` : 'ختمتك الأولى'}</Txt>
-              <Txt v="label" style={{ fontSize: 12.5, lineHeight: 18 }}>{`هذا الأسبوع: ${weekDone === 0 ? 'لم يكتمل حزب بعد' : `${ar(weekDone)} من ٧ أحزاب`}`}</Txt>
-            </View>
-            <ChevronIcon size={18} color={p.faint} />
-          </Pressable>
-        </Animated.View>
-        <Pressable onPress={() => { tap(); router.push('/idea'); }} accessibilityRole="button" hitSlop={8} style={{ marginTop: 18, alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 14 }}>
-          <Txt v="label" align="center" color={p.gold} style={{ fontSize: 13.5 }}>على منهاج الصحابة: لماذا سبعة أيام؟</Txt>
-        </Pressable>
       </View>
     </ScrollView>
   );

@@ -230,7 +230,7 @@ export default function Reader() {
   return (
     <View style={{ flex: 1, backgroundColor: p.pageBg }}>
       {state.settings.wake !== false && <KeepAwake />}
-      <Pager ref={pager} style={{ flex: 1 }} initialPage={startItem} scrollEnabled={!zoomed} onPageSelected={onSelected}>
+      <Pager ref={pager} style={{ flex: 1 }} paper={p.pageBg} initialPage={startItem} scrollEnabled={!zoomed} onPageSelected={onSelected}>
         {items.map((x, i) => {
           if (x.kind === 'page') {
             const id = x.it.page.id; const [pw, ph] = PAGE_SIZE[id] || [1110, 1768];
@@ -246,13 +246,13 @@ export default function Reader() {
           if (x.kind === 'stop') {
             return (
               <View key={`stop${x.k}`} style={{ flex: 1 }}>
-                {idx === i ? (() => { const d = stopInfo(x.k); return <Done title={d.title} line={d.line} primary={d.cont} onPrimary={next} secondary="يكفي الآن" onSecondary={close} />; })() : null}
+                {Math.abs(idx - i) <= 1 ? (() => { const d = stopInfo(x.k); return <Done title={d.title} line={d.line} primary={d.cont} onPrimary={next} secondary="يكفي الآن" onSecondary={close} />; })() : null}
               </View>
             );
           }
           return (
             <View key="fin" style={{ flex: 1 }}>
-              {idx === i ? (() => { const d = finInfo(); return <Done title={d.title} line={d.line} primary="العودة" onPrimary={close} />; })() : null}
+              {Math.abs(idx - i) <= 1 ? (() => { const d = finInfo(); return <Done title={d.title} line={d.line} primary="العودة" onPrimary={close} />; })() : null}
             </View>
           );
         })}

@@ -3,11 +3,10 @@ import React, { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Misbaha } from '../../components/BeadRing';
-import { BookIcon, ChevronIcon, MisbahaIcon, PinIcon } from '../../components/icons';
-import { Orb, PrayerPath } from '../../components/PrayerPath';
-import { GlassButton, GoldButton, Mark, Panel, Stat, Txt, useTap } from '../../components/ui';
-import { streak, weekFull } from '../../core/stats';
+import { BellIcon, BookIcon, CrescentIcon, MisbahaIcon, PinIcon, PRAYER_ICONS, ShareIcon } from '../../components/icons';
+import { Head, HeroButton, HeroCard, SitRow, StripDay, Tiles, Timeline, WeekStrip } from '../../components/dash';
+import { Mark, Panel, Stat, Txt, useTap } from '../../components/ui';
+import { dayStat, streak, weekFull } from '../../core/stats';
 import { DAYS } from '../../core/data';
 import { plan as planToday0 } from '../../core/plan';
 const planToday = (st: any, now: Date) => planToday0(st, now).key;
@@ -24,6 +23,7 @@ function hijri(d: Date) {
   try { return new Intl.DateTimeFormat('ar-EG-u-ca-islamic-umalqura-nu-arab', { day: 'numeric', month: 'long', year: 'numeric' }).format(d).replace(/\s?هـ$/, ''); } catch { return ''; }
 }
 const pn = (id: string) => ar(id.replace(/[a-c]$/, ''));
+const SHORT = ['أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
 
 export default function Today() {
   const p = usePalette(); const P = useViewPlan(); const { state, now, viewDay, setViewDay } = useStore(); const tap = useTap();
@@ -33,7 +33,6 @@ export default function Today() {
   const insets = useSafeAreaInsets(); const { width } = useWindowDimensions();
   const update = useUpdate();
   const W = Math.min(width, 520) - 48;
-  const ring = Math.min(W, 342);
 
   const dayRead = state.days[P.key]?.read;
   // what is still unread in the suggested sitting
@@ -47,11 +46,6 @@ export default function Today() {
   const openSitting = (k: number) => {
     let j = k; while (j < P.segs.length - 1 && !P.segs[j].length) j++;
     read({ seg: String(j) });
-  };
-  const shiftDay = (n: number) => {
-    const [y, m, d] = P.key.split('-').map(Number);
-    const k = dkey(addDays(new Date(y, m - 1, d), n));
-    tap(); setViewDay(k === todayKey ? null : k);
   };
   const [ty, tm, td] = todayKey.split('-').map(Number);
   const offset = Math.round((+new Date(P.date) - +new Date(ty, tm - 1, td)) / 864e5);
@@ -77,11 +71,15 @@ export default function Today() {
     cta = contLabel;
   }
 
-  const orbs: Orb[] = P.wins.map((x, k) => {
+  // the five sittings of the day, one after each prayer
+  const rows: SitRow[] = P.wins.map((x, k) => {
     const done = P.complete || !!(state.days[P.key]?.done || {})[x.i];
     const passed = isPast || (isToday && !!x.time && x.time <= now);
-    if (!isToday) return { i: x.i, name: x.name, time: x.time, state: done ? 'done' : isPast ? 'missed' : 'upcoming' };
-    return { i: x.i, name: x.name, time: x.time, state: done ? 'done' : k === P.nextIdx && !P.complete ? 'current' : passed && k < P.cur ? 'missed' : 'upcoming' };
+    const st: SitRow['state'] = done ? 'done' : !isToday ? (isPast ? 'missed' : 'upcoming') : k === P.nextIdx ? 'now' : passed && k < P.cur ? 'missed' : 'upcoming';
+    const n = P.segs[k].reduce((a, it) => a + it.w, 0);
+    return { key: String(x.i), Icon: PRAYER_ICONS[x.i] || PRAYER_ICONS[k], title: `جلسة ${x.name}`, sub: n > 0 ? `${PG(Math.max(1, Math.round(n)))}، نحو ${MN(mins(n))}` : 'لا صفحات في هذه الجلسة',
+      right: st === 'done' ? 'تمّ' : st === 'now' ? 'الآن' : st === 'missed' ? 'فاتت' : x.time ? fmtTime(x.time) : '', state: st, onPress: () => openSitting(k),
+      a11y: `جلسة ${x.name}، ${st === 'done' ? 'تمّت' : st === 'now' ? 'الآن' : st === 'missed' ? 'فاتت' : 'قادمة'}` };
   });
 
   const parts = useMemo(() => {
@@ -103,26 +101,27 @@ export default function Today() {
   const today = useMemo(() => { const [y, m, d] = todayKey.split('-').map(Number); return new Date(y, m - 1, d); }, [todayKey]);
   const run = useMemo(() => streak(state, today), [state, today]);
   const weekDone = useMemo(() => weekFull(state, today), [state, today]);
+  // the week of the book, Monday to Sunday
+  const strip: StripDay[] = useMemo(() => {
+    const mon = addDays(today, -((today.getDay() + 6) % 7));
+    return [0, 1, 2, 3, 4, 5, 6].map((i) => {
+      const d = addDays(mon, i); const k = dkey(d); const s = dayStat(state, d);
+      return { key: k, name: SHORT[d.getDay()], num: ar(d.getDate()), frac: s.total ? s.read / s.total : 0, full: s.full, today: k === todayKey, selected: k === P.key,
+        a11y: `ورد ${DAYS[d.getDay()].name}${k === todayKey ? '، اليوم' : ''}${s.full ? '، مكتمل' : ''}` };
+    });
+  }, [state, today, todayKey, P.key]);
   const city = state.settings.cityName || '';
   const g = P.date;
   const dateLine = [hijri(g), `${ar(g.getDate())} ${MONTHS[g.getMonth()]}`].filter(Boolean).join('، ');
 
   return (
-    <ScrollView contentContainerStyle={{ paddingTop: insets.top + 14, paddingBottom: insets.bottom + 130, paddingHorizontal: 24, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={{ paddingTop: insets.top + 14, paddingBottom: insets.bottom + 150, paddingHorizontal: 24, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
       <View style={{ width: W }}>
-        {/* header */}
+        {/* header: the date, the day, the city */}
         <Animated.View entering={FadeInDown.duration(500)} style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <View style={{ flex: 1 }}>
             <Txt v="label">{offset === 0 ? dateLine : `${offset === -1 ? 'أمس' : offset === 1 ? 'غدًا' : offset < 0 ? 'يوم سابق' : 'يوم قادم'}، ${dateLine}`}</Txt>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Pressable onPress={() => shiftDay(-1)} disabled={offset <= -7} hitSlop={10} accessibilityRole="button" accessibilityLabel="اليوم السابق" style={{ opacity: offset <= -7 ? 0.3 : 1 }}>
-                <ChevronIcon dir="right" size={22} color={p.gold} />
-              </Pressable>
-              <Txt v="display" style={{ flexShrink: 1 }} numberOfLines={1} adjustsFontSizeToFit>{`ورد ${P.dayName}`}</Txt>
-              <Pressable onPress={() => shiftDay(1)} disabled={offset >= 6} hitSlop={10} accessibilityRole="button" accessibilityLabel="اليوم التالي" style={{ opacity: offset >= 6 ? 0.3 : 1 }}>
-                <ChevronIcon size={22} color={p.gold} />
-              </Pressable>
-            </View>
+            <Txt v="display" numberOfLines={1} adjustsFontSizeToFit>{`ورد ${P.dayName}`}</Txt>
           </View>
           {city ? (
             <Pressable onPress={() => { tap(); router.push('/city'); }} accessibilityRole="button" accessibilityLabel={`المدينة: ${city}`}
@@ -133,12 +132,11 @@ export default function Today() {
           ) : null}
         </Animated.View>
 
-        {!isToday ? (
-          <Pressable onPress={() => { tap(); setViewDay(null); }} accessibilityRole="button"
-            style={{ marginTop: 10, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, height: 36, borderRadius: 18, backgroundColor: p.turqSoft, borderWidth: 1, borderColor: p.turq }}>
-            <Text style={{ fontFamily: F.uiBold, fontSize: 13.5, color: p.turqHi }}>العودة إلى اليوم</Text>
-          </Pressable>
-        ) : null}
+        {/* the week: tap a day to open its wird */}
+        <Animated.View entering={FadeInDown.delay(40).duration(500)}>
+          <WeekStrip days={strip} onPick={(k) => setViewDay(k === todayKey ? null : k)} />
+        </Animated.View>
+
         <WebNotice />
         {update ? (
           <Pressable onPress={() => { tap(); Linking.openURL(update.url); }} accessibilityRole="button" accessibilityLabel="تحديث التطبيق"
@@ -151,71 +149,54 @@ export default function Today() {
           </Pressable>
         ) : null}
 
-        {/* the misbaha */}
-        <Animated.View entering={FadeInDown.delay(60).duration(600)} style={{ alignItems: 'center', marginTop: 14 }}>
-          <Misbaha size={ring} readFrac={P.total ? P.readW / P.total : 0} nowFrac={P.total && !P.complete ? portionW / P.total : 0} complete={P.complete}
-            label={`تقدم ورد اليوم: ${ar(Math.round(P.readW))} من ${ar(Math.round(P.total))} صفحة`}>
-            {P.complete ? (
-              <>
-                <Txt v="display" align="center" style={{ fontSize: 44, lineHeight: 60 }}>تمّ</Txt>
-                <Txt v="meta" align="center">{`${PG(Math.round(P.total))} اليوم`}</Txt>
-              </>
-            ) : (
-              <>
-                <Txt v="label" align="center" color={p.gold}>{P.readW > 0 ? 'الباقي' : 'ورد اليوم'}</Txt>
-                <Txt v="num" align="center" style={{ fontSize: ring * 0.21, lineHeight: ring * 0.235 }}>{ar(Math.max(1, Math.round(P.left)))}</Txt>
-                <Txt v="meta" align="center" style={{ fontSize: 15, lineHeight: 22 }}>{P.readW > 0 ? `من ${ar(Math.round(P.total))} صفحة` : 'صفحة'}</Txt>
-                {P.left > 0 ? <Txt v="label" align="center" style={{ marginTop: 4 }}>{`نحو ${MN(mins(P.left))}`}</Txt> : null}
-              </>
-            )}
-          </Misbaha>
+        {/* the day's card: what is due now, how far along, and the way in */}
+        <Animated.View entering={FadeInDown.delay(80).duration(600)}>
+          <HeroCard style={{ marginTop: 16 }} eyebrow={eyebrow} tone={eyeTone} title={title} line={line} done={P.complete}
+            frac={P.total ? P.readW / P.total : 0} big={ar(Math.max(1, Math.round(P.left)))} small={P.readW > 0 ? 'صفحة باقية' : 'صفحة'}>
+            {!P.pages.length ? <HeroButton label="الإعدادات" onPress={() => router.navigate('/settings')} /> : null}
+            {cta && !secondary ? <HeroButton label={cta} icon={<BookIcon size={22} color="#2A1D07" />} onPress={cont} /> : null}
+            {cta && secondary ? <HeroButton quiet label={cta} onPress={cont} /> : null}
+            {P.complete ? <HeroButton quiet label="مراجعة ما قرأت" onPress={() => read({ seg: '0' })} /> : null}
+          </HeroCard>
+          {!isToday ? (
+            <Pressable onPress={() => { tap(); setViewDay(null); }} accessibilityRole="button"
+              style={{ marginTop: 12, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, height: 38, borderRadius: 19, backgroundColor: p.turqSoft, borderWidth: 1, borderColor: p.turq }}>
+              <Text style={{ fontFamily: F.uiBold, fontSize: 13.5, color: p.turqHi }}>العودة إلى اليوم</Text>
+            </Pressable>
+          ) : null}
         </Animated.View>
 
-        {/* the current sitting */}
-        <Animated.View entering={FadeInDown.delay(120).duration(600)} style={{ alignItems: 'center', marginTop: 6 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: eyeTone === 'now' ? p.turq : eyeTone === 'done' ? p.gold : p.faint}} />
-            <Text maxFontSizeMultiplier={1.25} style={{ fontFamily: F.ui, fontSize: 14, lineHeight: 20, color: eyeTone === 'now' ? p.turqHi : eyeTone === 'done' ? p.gold : p.muted }}>{eyebrow}</Text>
-          </View>
-          <Txt v="h1" align="center" style={{ marginTop: 4 }}>{title}</Txt>
-          {line ? <Txt v="meta" align="center" style={{ fontSize: 15, lineHeight: 24 }}>{line}</Txt> : null}
-          <View style={{ alignSelf: 'stretch', marginTop: 16, gap: 10 }}>
-            {!P.pages.length ? <GoldButton label="الإعدادات" onPress={() => router.navigate('/settings')} /> : null}
-            {cta && !secondary ? <GoldButton label={cta} icon={<BookIcon size={22} color={p.onPrimary} />} onPress={cont} /> : null}
-            {cta && secondary ? <GlassButton label={cta} tone="gold" onPress={cont} /> : null}
-            {P.complete ? <GlassButton label="مراجعة ما قرأت" tone="gold" onPress={() => read({ seg: '0' })} /> : null}
-            {!P.complete && P.pages.length ? <Txt v="label" align="center" style={{ marginTop: 2 }}>الجلسات للتيسير فقط. اقرأ الورد دفعة واحدة أو على مهلك، والتطبيق يحفظ الصفحة التي وقفت عندها.</Txt> : null}
-          </View>
-        </Animated.View>
-
-        {/* a row of small facts: the run of days, this week, today's time */}
+        {/* a row of small facts: the run of days, this week, today */}
         {P.pages.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(150).duration(600)}>
-            <Panel style={{ marginTop: 22 }} padding={8}>
+          <Animated.View entering={FadeInDown.delay(130).duration(600)}>
+            <Panel style={{ marginTop: 16 }} padding={8}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Stat value={ar(run)} label={run === 1 ? 'يوم متتالٍ' : 'أيام متتالية'} tone={run > 0 ? 'gold' : undefined} />
                 <View style={{ width: 1, height: 34, backgroundColor: p.rule }} />
                 <Stat value={`${ar(weekDone)} / ٧`} label="أيام هذا الأسبوع" tone={weekDone > 0 ? 'now' : undefined} />
                 <View style={{ width: 1, height: 34, backgroundColor: p.rule }} />
-                <Stat value={`${ar(Math.round(P.total ? (P.readW / P.total) * 100 : 0))}٪`} label="من ورد اليوم" />
+                <Stat value={P.left > 0 ? MN(mins(P.left)).replace('نحو ', '') : '٠'} label="باقٍ اليوم" />
               </View>
             </Panel>
           </Animated.View>
         )}
 
-        {/* the day's horizon */}
+        {/* the day's sittings */}
         {P.pages.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(180).duration(600)} style={{ marginTop: 32 }}>
-            <PrayerPath orbs={orbs} width={W} onPress={openSitting} />
-            <Txt v="label" align="center" style={{ marginTop: 2 }}>اضغط أي صلاة لقراءة جلستها، ولو فاتت.</Txt>
+          <Animated.View entering={FadeInDown.delay(180).duration(600)}>
+            <Head title="جلسات اليوم" />
+            <Panel padding={14}>
+              <View style={{ paddingVertical: 6 }}><Timeline rows={rows} /></View>
+            </Panel>
+            <Txt v="label" align="center" style={{ marginTop: 10 }}>الجلسات للتيسير فقط: اقرأ الورد دفعة واحدة أو على مهلك، والتطبيق يحفظ الصفحة التي وقفت عندها.</Txt>
           </Animated.View>
         )}
 
         {/* the parts of today's wird, marked with the book's rosette */}
         {parts.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(240).duration(600)}>
-            <Panel style={{ marginTop: 20 }}>
-              <Txt v="h2" style={{ marginTop: 10, marginBottom: 2 }}>أجزاء ورد اليوم</Txt>
+          <Animated.View entering={FadeInDown.delay(230).duration(600)}>
+            <Head title="أجزاء ورد اليوم" />
+            <Panel>
               {parts.map((x, k) => (
                 <Pressable key={x.idx} accessibilityRole="button" accessibilityLabel={`${x.ttl}، ${x.label}`} onPress={() => read({ page: x.first })}
                   style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, opacity: pressed ? 0.7 : 1, borderTopWidth: k === 0 ? 0 : 1, borderTopColor: p.rule })}>
@@ -231,17 +212,15 @@ export default function Today() {
           </Animated.View>
         )}
 
-        {/* the daily wird: separate from the weekly wird, only for those who open it */}
-        <Animated.View entering={FadeInDown.delay(300).duration(600)}>
-          <Pressable onPress={() => { tap(); router.push('/daily'); }} accessibilityRole="button" accessibilityLabel="الورد اليومي"
-            style={({ pressed }) => ({ marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, paddingHorizontal: 18, borderRadius: 20, borderWidth: 1, borderStyle: 'dashed', borderColor: p.goldFaint, backgroundColor: pressed ? p.chip : p.dark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.35)' })}>
-            <MisbahaIcon size={26} />
-            <View style={{ flex: 1 }}>
-              <Txt v="body" style={{ fontFamily: F.uiMed, fontSize: 15.5, lineHeight: 23 }}>الورد اليومي</Txt>
-              <Txt v="label" style={{ fontSize: 12.5, lineHeight: 18 }}>الأساس، والمسبّعات، والوظيفة، وحزب البحر، مع المسبحة</Txt>
-            </View>
-            <ChevronIcon size={18} color={p.faint} />
-          </Pressable>
+        {/* shortcuts */}
+        <Animated.View entering={FadeInDown.delay(280).duration(600)}>
+          <Head title="المزيد" />
+          <Tiles items={[
+            { key: 'daily', icon: <MisbahaIcon size={24} />, title: 'الورد اليومي', sub: 'الأساس والمسبّعات والوظيفة وحزب البحر', onPress: () => router.push('/daily') },
+            { key: 'week', icon: <CrescentIcon size={22} color={p.goldLight} />, title: 'أسبوعك', sub: 'أيام الأسبوع وما اكتمل منها', onPress: () => router.navigate('/week') },
+            { key: 'city', icon: <BellIcon size={22} color={p.goldLight} />, title: 'المواقيت والتنبيهات', sub: city ? `مواقيت ${city}` : 'اختر مدينتك', onPress: () => router.navigate('/settings') },
+            { key: 'share', icon: <ShareIcon size={22} color={p.goldLight} />, title: 'شارك التطبيق', sub: 'رابط ورمز QR', onPress: () => router.push('/share') },
+          ]} />
         </Animated.View>
       </View>
     </ScrollView>

@@ -46,7 +46,7 @@ export default function Book() {
   return (
     <View style={{ flex: 1, backgroundColor: p.pageBg }}>
       {state.settings.wake !== false && <KeepAwake />}
-      <Pager ref={pager} style={{ flex: 1 }} scrollEnabled={!zoomed}
+      <Pager ref={pager} style={{ flex: 1 }} paper={p.pageBg} scrollEnabled={!zoomed}
         onPageSelected={(i) => { setIdx(i); idxRef.current = i; setZoomed(zoom > 1); tap(); }}>
         {ids.map((id, i) => {
           const [pw, ph] = PAGE_SIZE[id] || [1110, 1768];

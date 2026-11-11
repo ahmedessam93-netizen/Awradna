@@ -32,6 +32,7 @@ export type Palette = {
   goldFaint: string;
   turq: string; turqHi: string; turqSoft: string;
   danger: string;
+  hero: [string, string, string];          // the deep card that holds the day's reading
   primary: [string, string, string];       // main button gradient
   onPrimary: string;
   chip: string; chipBorder: string;
@@ -58,6 +59,7 @@ export const NIGHT: Palette = {
   danger: '#F2A39A',
   primary: ['#F7E2A6', '#E2BC6A', '#B48A36'], onPrimary: '#2A1D07',
   chip: 'rgba(255,255,255,0.05)', chipBorder: 'rgba(226,188,106,0.28)',
+  hero: ['#27469A', '#182E6C', '#0F1D4A'],
   statusBar: 'light', night: true, pageBg: '#0B1329', pageInk: '#F0E4CB',
 };
 
@@ -79,6 +81,7 @@ export const DAWN: Palette = {
   danger: '#B4483C',
   primary: ['#2C4FA3', '#1B3577', '#122456'], onPrimary: '#FBF3DC',
   chip: '#FFFDF6', chipBorder: 'rgba(154,107,20,0.26)',
+  hero: ['#2C4FA3', '#1B3577', '#122456'],
   statusBar: 'dark', night: false, pageBg: '#FBF6EA', pageInk: '#1B2436',
 };
 

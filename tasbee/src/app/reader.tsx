@@ -202,7 +202,7 @@ export default function Reader() {
   return (
     <View style={{ flex: 1, backgroundColor: p.pageBg }}>
       {state.settings.wake !== false && Platform.OS !== 'web' && <KeepAwake />}
-      <Pager ref={pager} style={{ flex: 1 }} initialPage={startItem} onPageSelected={onSelected}>
+      <Pager ref={pager} style={{ flex: 1 }} paper={p.pageBg} initialPage={startItem} onPageSelected={onSelected}>
         {items.map((x, i) => {
           if (x.kind === 'page') {
             return (
@@ -219,13 +219,13 @@ export default function Reader() {
           if (x.kind === 'stop') {
             return (
               <View key={`stop${x.k}`} style={{ flex: 1 }}>
-                {idx === i ? (() => { const d = stopInfo(x.k); return <Done title={d.title} line={d.line} primary={d.cont} onPrimary={next} secondary="يكفي الآن" onSecondary={close} />; })() : null}
+                {Math.abs(idx - i) <= 1 ? (() => { const d = stopInfo(x.k); return <Done title={d.title} line={d.line} primary={d.cont} onPrimary={next} secondary="يكفي الآن" onSecondary={close} />; })() : null}
               </View>
             );
           }
           return (
             <View key="fin" style={{ flex: 1 }}>
-              {idx === i ? (() => {
+              {Math.abs(idx - i) <= 1 ? (() => {
                 const d = finInfo();
                 return khatmaNew
                   ? <Done title={d.title} line={d.line} primary="دعاء ختم القرآن" onPrimary={() => { flush(); router.replace('/khatma'); }} secondary="العودة" onSecondary={close} />
