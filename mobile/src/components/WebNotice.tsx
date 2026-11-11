@@ -23,7 +23,7 @@ export function WebNotice() {
       <View style={box}>
         <ShareIcon size={22} color={p.turqHi} />
         <View style={{ flex: 1 }}>
-          <Txt v="h3" style={{ fontSize: 15 }}>لتصلك الإشعارات على الآيفون</Txt>
+          <Txt v="h3" style={{ fontSize: 15 }}>{pushSupported() ? 'لتصلك الإشعارات على الآيفون' : 'أضف أورادنا إلى الشاشة الرئيسية'}</Txt>
           <Txt v="label">اضغط زر المشاركة في سفاري، ثم «إضافة إلى الشاشة الرئيسية»، وافتح أورادنا من أيقونته.</Txt>
         </View>
       </View>
@@ -32,7 +32,7 @@ export function WebNotice() {
   // Android browsers: the real app is a tap away
   const android = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
   const appBanner = android ? (
-    <Pressable accessibilityRole="link" onPress={() => { tap(); Linking.openURL('/android/'); }} style={box}>
+    <Pressable accessibilityRole="link" onPress={() => { tap(); Linking.openURL('https://ahmedessam93-netizen.github.io/Awradna/'); }} style={box}>
       <BellIcon size={22} color={p.turqHi} />
       <View style={{ flex: 1 }}>
         <Txt v="h3" style={{ fontSize: 15 }}>تطبيق أورادنا لأندرويد</Txt>

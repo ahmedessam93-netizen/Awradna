@@ -8,14 +8,16 @@ export const CHANNEL_ID = 'wird';
 const VAPID_PUBLIC = 'BA5YHXq-RWnQAqlMQMDxniMEtkox2FPuayvBu6YqwmTXY2SzOJKh9YNBfZNX_qHLhdn3b44cXkOjPPXHlG8w_Oo';
 const SYNC_URL = '/.netlify/functions/push-sync';
 
-export const pushSupported = () => typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+// The notification server lives on the Netlify site only; a copy hosted elsewhere has none.
+const hasServer = () => typeof location !== 'undefined' && (location.hostname === 'awradna.netlify.app' || location.hostname === 'localhost');
+export const pushSupported = () => typeof window !== 'undefined' && hasServer() && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 export const isIOS = () => typeof navigator !== 'undefined' && /iPhone|iPad|iPod/.test(navigator.userAgent);
 export const isStandalone = () => typeof window !== 'undefined' && (window.matchMedia?.('(display-mode: standalone)').matches || (navigator as any).standalone === true);
 // On iPhone, notifications need the app on the Home Screen first.
 export const needsHomeScreen = () => isIOS() && !isStandalone();
 
 export function configureNotifications() {
-  if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+  if (typeof navigator !== 'undefined' && hasServer() && 'serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 
 function keyBytes(b64: string) {
