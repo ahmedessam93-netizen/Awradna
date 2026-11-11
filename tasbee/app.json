@@ -3,11 +3,11 @@
     "name": "قرآن (تسبيع)",
     "slug": "ahmed-essam",
     "scheme": "tasbee",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#0C1733",
+    "backgroundColor": "#0A2C26",
     "ios": {
       "bundleIdentifier": "com.tasbee.quran",
       "supportsTablet": false,
@@ -22,10 +22,10 @@
     },
     "android": {
       "package": "com.tasbee.quran",
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-foreground.png",
-        "backgroundColor": "#0C1733",
+        "backgroundColor": "#0A2C26",
         "monochromeImage": "./assets/adaptive-monochrome.png"
       },
       "permissions": [
@@ -57,10 +57,10 @@
         {
           "image": "./assets/splash-mark.png",
           "imageWidth": 140,
-          "backgroundColor": "#0C1733",
+          "backgroundColor": "#0A2C26",
           "dark": {
             "image": "./assets/splash-mark.png",
-            "backgroundColor": "#0C1733"
+            "backgroundColor": "#0A2C26"
           }
         }
       ],

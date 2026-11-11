@@ -98,10 +98,10 @@ function Shell() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="reader" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', contentStyle: { backgroundColor: p.pageBg } }} />
           <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
-          <Stack.Screen name="city" options={{ presentation: 'modal', contentStyle: { backgroundColor: p.dark ? '#0E1A3A' : '#F5F1EA' } }} />
+          <Stack.Screen name="city" options={{ presentation: 'modal', contentStyle: { backgroundColor: p.dark ? '#0B2D27' : '#F8F3E4' } }} />
           <Stack.Screen name="khatma" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
           <Stack.Screen name="idea" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
-          <Stack.Screen name="share" options={{ presentation: 'modal', contentStyle: { backgroundColor: p.dark ? '#0E1A3A' : '#F5F1EA' } }} />
+          <Stack.Screen name="share" options={{ presentation: 'modal', contentStyle: { backgroundColor: p.dark ? '#0B2D27' : '#F8F3E4' } }} />
         </Stack>
       </View>
     </ThemeProvider>

@@ -32,7 +32,7 @@ export default function Week() {
         <Animated.View entering={FadeInDown.delay(80).duration(600)} style={{ alignItems: 'center', marginTop: 18 }}>
           <View accessible accessibilityLabel={`أتممت ${cnt(full, 'حزبًا واحدًا', 'حزبين', 'أحزاب')} من سبعة هذا الأسبوع`}>
             <WeekRosette size={size} names={days.map((x) => x.name)} states={days.map((x) => x.st)}>
-              <Text allowFontScaling={false} style={{ fontFamily: F.title, fontSize: 40 * (size / 300), lineHeight: 46 * (size / 300), color: '#F3EAD7', textAlign: 'center' }}>{ar(full)}</Text>
+              <Text allowFontScaling={false} style={{ fontFamily: F.title, fontSize: 40 * (size / 300), lineHeight: 46 * (size / 300), color: '#F3EAD7', textAlign: 'center' }}>{full ? ar(full) : '–'}</Text>
               <Text allowFontScaling={false} style={{ fontFamily: F.ui, fontSize: 12, lineHeight: 16, color: 'rgba(243,234,215,0.7)', textAlign: 'center' }}>من ٧ أحزاب</Text>
             </WeekRosette>
           </View>

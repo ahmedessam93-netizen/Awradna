@@ -49,7 +49,7 @@ export default function Week() {
         <Animated.View entering={FadeInDown.delay(80).duration(600)} style={{ alignItems: 'center', marginTop: 18 }}>
           <View accessible accessibilityLabel={`أتممت ${cnt(full, 'يومًا واحدًا', 'يومين', 'أيام')} من سبعة هذا الأسبوع`}>
             <WeekRosette size={size} names={NAMES} states={days.map((x) => x.st)}>
-              <Text allowFontScaling={false} style={{ fontFamily: F.title, fontSize: 40 * (size / 300), lineHeight: 46 * (size / 300), color: '#F3EAD7', textAlign: 'center' }}>{ar(full)}</Text>
+              <Text allowFontScaling={false} style={{ fontFamily: F.title, fontSize: 40 * (size / 300), lineHeight: 46 * (size / 300), color: '#F3EAD7', textAlign: 'center' }}>{full ? ar(full) : '–'}</Text>
               <Text allowFontScaling={false} style={{ fontFamily: F.ui, fontSize: 12, lineHeight: 16, color: 'rgba(243,234,215,0.7)', textAlign: 'center' }}>من ٧ أيام</Text>
             </WeekRosette>
           </View>
@@ -59,7 +59,7 @@ export default function Week() {
         <Animated.View entering={FadeInDown.delay(160).duration(600)}>
           <Panel style={{ marginTop: 22 }}>
             {days.map((x, i) => {
-              const label = x.st === 'done' ? 'اكتمل' : x.st === 'today' ? `${ar(Math.round(x.s.read))} من ${ar(Math.round(x.s.total))} صفحة` : x.st === 'missed' ? (x.s.read > 0 ? `${ar(Math.round(x.s.read))} من ${ar(Math.round(x.s.total))}` : 'فات') : PG(Math.round(x.s.total));
+              const label = x.st === 'done' ? 'اكتمل' : x.st === 'today' ? (Math.round(x.s.read) > 0 ? `${ar(Math.round(x.s.read))} من ${ar(Math.round(x.s.total))} صفحة` : PG(Math.round(x.s.total))) : x.st === 'missed' ? (x.s.read > 0 ? `${ar(Math.round(x.s.read))} من ${ar(Math.round(x.s.total))}` : 'فات') : PG(Math.round(x.s.total));
               const color = x.st === 'done' ? p.gold : x.st === 'today' ? p.turqHi : p.faint;
               return (
                 <Pressable key={x.n} onPress={() => { tap(); setViewDay(x.today ? null : dkey(x.d)); router.navigate('/'); }} accessibilityRole="button" accessibilityLabel={`افتح ورد ${x.n}`}

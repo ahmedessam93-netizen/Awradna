@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BookIcon, SearchIcon } from '../../components/icons';
+import { BookIcon, SearchIcon, BookmarkIcon, CloseIcon } from '../../components/icons';
 import { GlassButton, GoldButton, Panel, Segmented, Txt, useTap } from '../../components/ui';
 import { ar, ORDINALS } from '../../core/plan';
 import { useStore } from '../../core/store';
@@ -17,7 +17,8 @@ const norm = (s: string) => s.replace(/[ً-ْٰـ]/g, '').replace(/[أإآٱ]/g,
 
 export default function Mushaf() {
   const p = usePalette(); const tap = useTap(); const insets = useSafeAreaInsets(); const { width } = useWindowDimensions();
-  const { state } = useStore();
+  const { state, toggleBookmark } = useStore();
+  const marks = state.bookmarks || [];
   const W = Math.min(width, 520) - 48;
   const [view, setView] = useState<'surah' | 'juz' | 'hizb'>('surah');
   const [q, setQ] = useState('');
@@ -43,6 +44,32 @@ export default function Mushaf() {
         <GoldButton style={{ marginTop: 14 }} icon={<BookIcon size={22} color={p.onPrimary} />}
           label={last ? `تابع من ص ${ar(last)}، ${surahName(surahsOn(last)[0])}` : 'افتح المصحف'} onPress={() => open(last || 1)} />
         <Txt v="label" style={{ marginTop: 8 }}>قراءة حرة خارج جلسات التسبيع، وتُحفظ صفحتها وحدها.</Txt>
+
+        {marks.length ? (
+          <Panel style={{ marginTop: 16 }} padding={6}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingTop: 10, paddingBottom: 4 }}>
+              <BookmarkIcon size={18} color={p.gold} filled />
+              <Txt v="h2" style={{ fontSize: 16.5, lineHeight: 24 }}>علاماتك</Txt>
+            </View>
+            {marks.map((pg, i) => (
+              <View key={pg} style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: i === 0 ? 0 : 1, borderTopColor: p.rule }}>
+                <Pressable onPress={() => open(pg)} accessibilityRole="button" accessibilityLabel={`افتح العلامة: صفحة ${ar(pg)}، سورة ${surahName(surahsOn(pg)[0])}`}
+                  style={({ pressed }) => ({ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 10, opacity: pressed ? 0.6 : 1 })}>
+                  <Text allowFontScaling={false} style={{ width: 44, textAlign: 'center', fontFamily: F.title, fontSize: 16, color: p.gold }}>{ar(pg)}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Txt v="body" style={{ fontFamily: F.uiMed }}>{`سورة ${surahName(surahsOn(pg)[0])}`}</Txt>
+                    <Txt v="label">{`الجزء ${ar(juzOf(pg))}، الصفحة ${ar(pg)}`}</Txt>
+                  </View>
+                </Pressable>
+                <Pressable onPress={() => { tap(); toggleBookmark(pg); }} hitSlop={8} accessibilityRole="button" accessibilityLabel={`احذف علامة الصفحة ${ar(pg)}`} style={{ padding: 12 }}>
+                  <CloseIcon size={16} color={p.faint} />
+                </Pressable>
+              </View>
+            ))}
+          </Panel>
+        ) : (
+          <Txt v="label" style={{ marginTop: 6 }}>لتضع علامة على صفحة: افتحها ثم اضغط الشريط أعلى الصفحة.</Txt>
+        )}
 
         <View style={{ marginTop: 18, alignItems: 'flex-start' }}>
           <Segmented value={view} onChange={(v) => setView(v)} options={[{ v: 'surah', label: 'السور' }, { v: 'juz', label: 'الأجزاء' }, { v: 'hizb', label: 'الأحزاب السبعة' }]} />

@@ -39,6 +39,8 @@ type Ctx = {
   /** Count a completed khatma once for its week. Returns true if it was newly counted. */
   countKhatma: (cycle: string) => boolean;
   setMushafPage: (p: number) => void;
+  /** Mark or unmark a mushaf page to come back to. */
+  toggleBookmark: (p: number) => void;
   resetDay: (dayKey: string) => void;
   viewDay: string | null;
   setViewDay: (key: string | null) => void;
@@ -110,6 +112,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return true;
     },
     setMushafPage: (p) => { const s = latest.current; if (s.mushafPage !== p) quiet({ ...s, mushafPage: p }); },
+    toggleBookmark: (p) => { const s = latest.current; const b = s.bookmarks || []; quiet({ ...s, bookmarks: b.includes(p) ? b.filter((x) => x !== p) : [...b, p].sort((x, y) => x - y) }); },
     resetDay: (key) => {
       const s = latest.current; const days = { ...s.days }; delete days[key];
       commit({ ...s, days }, 400);

@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Misbaha } from '../../components/BeadRing';
 import { BookIcon, ChevronIcon, MisbahaIcon, PinIcon } from '../../components/icons';
 import { Orb, PrayerPath } from '../../components/PrayerPath';
-import { GlassButton, GoldButton, Mark, Panel, Txt, useTap } from '../../components/ui';
+import { GlassButton, GoldButton, Mark, Panel, Stat, Txt, useTap } from '../../components/ui';
+import { streak, weekFull } from '../../core/stats';
 import { DAYS } from '../../core/data';
 import { plan as planToday0 } from '../../core/plan';
 const planToday = (st: any, now: Date) => planToday0(st, now).key;
@@ -99,6 +100,9 @@ export default function Today() {
     }).filter(Boolean) as { idx: number; ttl: string; sub: string; st: string; label: string; first: string }[];
   }, [P, state]);
 
+  const today = useMemo(() => { const [y, m, d] = todayKey.split('-').map(Number); return new Date(y, m - 1, d); }, [todayKey]);
+  const run = useMemo(() => streak(state, today), [state, today]);
+  const weekDone = useMemo(() => weekFull(state, today), [state, today]);
   const city = state.settings.cityName || '';
   const g = P.date;
   const dateLine = [hijri(g), `${ar(g.getDate())} ${MONTHS[g.getMonth()]}`].filter(Boolean).join('، ');
@@ -158,9 +162,10 @@ export default function Today() {
               </>
             ) : (
               <>
-                <Txt v="num" align="center" style={{ fontSize: ring * 0.21, lineHeight: ring * 0.235 }}>{ar(Math.round(P.readW))}</Txt>
-                <Txt v="meta" align="center" style={{ fontSize: 15, lineHeight: 22 }}>{`من ${ar(Math.round(P.total))} صفحة`}</Txt>
-                {P.left > 0 ? <Txt v="label" align="center" color={p.gold} style={{ marginTop: 6 }}>{`بقي نحو ${MN(mins(P.left))}`}</Txt> : null}
+                <Txt v="label" align="center" color={p.gold}>{P.readW > 0 ? 'الباقي' : 'ورد اليوم'}</Txt>
+                <Txt v="num" align="center" style={{ fontSize: ring * 0.21, lineHeight: ring * 0.235 }}>{ar(Math.max(1, Math.round(P.left)))}</Txt>
+                <Txt v="meta" align="center" style={{ fontSize: 15, lineHeight: 22 }}>{P.readW > 0 ? `من ${ar(Math.round(P.total))} صفحة` : 'صفحة'}</Txt>
+                {P.left > 0 ? <Txt v="label" align="center" style={{ marginTop: 4 }}>{`نحو ${MN(mins(P.left))}`}</Txt> : null}
               </>
             )}
           </Misbaha>
@@ -182,6 +187,21 @@ export default function Today() {
             {!P.complete && P.pages.length ? <Txt v="label" align="center" style={{ marginTop: 2 }}>الجلسات للتيسير فقط. اقرأ الورد دفعة واحدة أو على مهلك، والتطبيق يحفظ الصفحة التي وقفت عندها.</Txt> : null}
           </View>
         </Animated.View>
+
+        {/* a row of small facts: the run of days, this week, today's time */}
+        {P.pages.length > 0 && (
+          <Animated.View entering={FadeInDown.delay(150).duration(600)}>
+            <Panel style={{ marginTop: 22 }} padding={8}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Stat value={ar(run)} label={run === 1 ? 'يوم متتالٍ' : 'أيام متتالية'} tone={run > 0 ? 'gold' : undefined} />
+                <View style={{ width: 1, height: 34, backgroundColor: p.rule }} />
+                <Stat value={`${ar(weekDone)} / ٧`} label="أيام هذا الأسبوع" tone={weekDone > 0 ? 'now' : undefined} />
+                <View style={{ width: 1, height: 34, backgroundColor: p.rule }} />
+                <Stat value={`${ar(Math.round(P.total ? (P.readW / P.total) * 100 : 0))}٪`} label="من ورد اليوم" />
+              </View>
+            </Panel>
+          </Animated.View>
+        )}
 
         {/* the day's horizon */}
         {P.pages.length > 0 && (

@@ -51,7 +51,7 @@ export function WeekRosette({ size = 300, names, states, children }: { size?: nu
       <Svg width={size} height={size} viewBox="0 0 300 300">
         <Defs>
           {GOLD('wg')}
-          <RadialGradient id="core" cx="50%" cy="45%" r="60%"><Stop offset="0" stopColor={p.dark ? '#21408A' : '#2B4C9A'} /><Stop offset="1" stopColor={p.dark ? '#0E1D45' : '#142650'} /></RadialGradient>
+          <RadialGradient id="core" cx="50%" cy="45%" r="60%"><Stop offset="0" stopColor={p.dark ? '#1F6E5A' : p.primary[0]} /><Stop offset="1" stopColor={p.dark ? '#0A2B24' : p.primary[2]} /></RadialGradient>
         </Defs>
         <Circle cx={150} cy={150} r={146} fill="none" stroke={p.gold} strokeOpacity={0.2} strokeWidth={1} />
         {states.map((s, i) => {

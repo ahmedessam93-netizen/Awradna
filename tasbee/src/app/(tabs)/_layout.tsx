@@ -3,7 +3,7 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookIcon, CrescentIcon, LampIcon, StarIcon } from '../../components/icons';
-import { Bar, useTap } from '../../components/ui';
+import { Bar, TabFade, useTap } from '../../components/ui';
 import { useStore } from '../../core/store';
 import { F, usePalette } from '../../theme';
 
@@ -19,7 +19,8 @@ const PATHS: Record<string, '/' | '/week' | '/mushaf' | '/settings'> = { index: 
 function TabBar({ state, navigation }: any) {
   const p = usePalette(); const insets = useSafeAreaInsets(); const tap = useTap();
   return (
-    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: Math.max(insets.bottom - 6, 12) + 8, alignItems: 'center' }}>
+    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingBottom: Math.max(insets.bottom - 6, 12) + 8, alignItems: 'center' }}>
+      <TabFade height={Math.max(insets.bottom - 6, 12) + 118} />
       <Bar radius={32}>
         <View style={{ flexDirection: 'row', padding: 6, gap: 4 }}>
           {state.routes.map((route: any, idx: number) => {

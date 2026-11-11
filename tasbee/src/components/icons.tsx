@@ -60,6 +60,12 @@ export const CloseIcon = (p: P) => <Base {...p} strokeWidth={p.strokeWidth ?? 2}
 export const ChevronIcon = (p: P & { dir?: 'left' | 'right' }) => <Base {...p} strokeWidth={p.strokeWidth ?? 2}><Path d={p.dir === 'right' ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6'} /></Base>;
 export const PinIcon = (p: P) => <Base {...p} strokeWidth={p.strokeWidth ?? 2}><Path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" /><Circle cx={12} cy={10} r={2.3} /></Base>;
 export const BellIcon = one('M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15zM10 20.5a2.2 2.2 0 0 0 4 0');
+// A ribbon: a marked page. Filled when the page is marked.
+export const BookmarkIcon = (p: P & { filled?: boolean }) => (
+  <Svg width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none">
+    <Path d="M7 3.8h10a.8.8 0 0 1 .8.8v15.6L12 16.4l-5.8 3.8V4.6a.8.8 0 0 1 .8-.8z" stroke={p.color} strokeWidth={1.7} strokeLinejoin="round" fill={p.filled ? p.color : 'none'} />
+  </Svg>
+);
 export const SearchIcon = (p: P) => <Base {...p}><Circle cx={11} cy={11} r={6.5} /><Path d="M16 16l4.5 4.5" /></Base>;
 export const UndoIcon = (p: P) => <Base {...p} strokeWidth={p.strokeWidth ?? 2}><Path d="M9 14l-4-4 4-4" /><Path d="M5 10h9a5 5 0 0 1 0 10h-3" /></Base>;
 export const ShareIcon = (p: P) => <Base {...p} strokeWidth={p.strokeWidth ?? 1.8}><Path d="M12 3.5v11" /><Path d="M8 7.5l4-4 4 4" /><Path d="M6 11.5H5v8.5h14v-8.5h-1" /></Base>;

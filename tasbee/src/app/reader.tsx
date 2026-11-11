@@ -10,7 +10,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState, Platform, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronIcon, CloseIcon } from '../components/icons';
+import { ChevronIcon, CloseIcon, BookmarkIcon } from '../components/icons';
 import { MushafPage } from '../components/MushafPage';
 import { Shamsa } from '../components/ornaments';
 import { Pager, PagerHandle } from '../components/Pager';
@@ -54,7 +54,7 @@ export default function Reader() {
   const { width, height } = useWindowDimensions();
   const params = useLocalSearchParams<{ day?: string; seg?: string; at?: string; mode?: string; page?: string }>();
   const free = params.mode === 'mushaf';
-  const { state, finishSitting, setPlace, countKhatma, setMushafPage } = useStore();
+  const { state, finishSitting, setPlace, countKhatma, setMushafPage, toggleBookmark } = useStore();
 
   const P = useMemo(() => planForDay(state, params.day || null, new Date()), []); // eslint-disable-line react-hooks/exhaustive-deps
   const items: Item[] = useMemo(() => {
@@ -245,6 +245,9 @@ export default function Reader() {
                 <Text numberOfLines={1} maxFontSizeMultiplier={1.2} style={{ fontFamily: F.display, fontSize: 16.5, lineHeight: 23, color: p.ink, textAlign: 'right' }}>{title}</Text>
                 <Text numberOfLines={1} maxFontSizeMultiplier={1.2} style={{ fontFamily: F.ui, fontSize: 12.5, lineHeight: 18, color: p.muted, textAlign: 'right' }}>{sub}</Text>
               </View>
+              <IconButton label={(state.bookmarks || []).includes(pageNo) ? 'إزالة العلامة عن هذه الصفحة' : 'ضع علامة على هذه الصفحة'} onPress={() => { toggleBookmark(pageNo); showChrome(true); }}>
+                <BookmarkIcon size={20} color={(state.bookmarks || []).includes(pageNo) ? p.gold : p.ink} filled={(state.bookmarks || []).includes(pageNo)} />
+              </IconButton>
             </View>
           </Bar>
         </Animated.View>

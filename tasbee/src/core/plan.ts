@@ -25,6 +25,8 @@ export type State = {
   khatma: { count: number; counted: Record<string, number> };
   /** the free-reading place in the whole mushaf (page) */
   mushafPage?: number;
+  /** pages the reader marked to come back to */
+  bookmarks?: number[];
 };
 
 export const DEFAULTS: Settings = {
@@ -41,6 +43,7 @@ export function normalize(raw: any): State {
     days: (raw && raw.days) || {},
     khatma: { count: Number(k.count) || 0, counted: k.counted || {} },
     mushafPage: raw && raw.mushafPage ? Number(raw.mushafPage) : undefined,
+    bookmarks: Array.isArray(raw && raw.bookmarks) ? raw.bookmarks.map(Number).filter((n: number) => n >= 1 && n <= 604) : [],
   };
 }
 
@@ -200,4 +203,12 @@ export function upcomingNotifications(st: State, now: Date, maxCount = 60): Plan
     });
   }
   return out.sort((a, b) => +a.at - +b.at).slice(0, maxCount);
+}
+
+/** Days in a row with a finished part, ending today (or yesterday while today is still open). */
+export function streak(st: State, P: Plan): number {
+  const full = (d: Date) => { const done = st.days[dkey(d)]?.done || {}; return [0, 1, 2, 3, 4].every((k) => done[k]); };
+  let n = 0; let d = full(P.date) ? P.date : addDays(P.date, -1);
+  while (n < 400 && full(d)) { n++; d = addDays(d, -1); }
+  return n;
 }

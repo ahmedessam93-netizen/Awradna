@@ -6,8 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookIcon, ChevronIcon, PinIcon } from '../../components/icons';
 import { Orb, PrayerPath } from '../../components/PrayerPath';
 import { Ring } from '../../components/Ring';
-import { GlassButton, GoldButton, Mark, Panel, Txt, useTap } from '../../components/ui';
-import { addDays, ar, dkey, fmtTime, MN, ORDINALS, PG, plan, sitLabel, sitPages, weekOf } from '../../core/plan';
+import { GlassButton, GoldButton, Mark, Panel, Stat, Txt, useTap } from '../../components/ui';
+import { addDays, ar, DAY_NAMES, dkey, fmtTime, MN, ORDINALS, PG, plan, sitLabel, sitPages, streak, weekOf } from '../../core/plan';
 import { useStore, useViewPlan } from '../../core/store';
 import { useUpdate } from '../../core/update';
 import { minutesFor } from '../../quran';
@@ -69,6 +69,9 @@ export default function Today() {
 
   const week = weekOf(state, P);
   const weekDone = week.filter((x) => x.full).length;
+  const run = useMemo(() => streak(state, plan(state, now)), [state, now]);
+  // the parts of this week that were left unfinished on their days
+  const missed = isToday ? week.filter((x) => !x.full && x.key < P.key) : [];
   const partial = (() => {
     if (!P.at) return 0;
     const [ak, ap] = P.at.split(':').map(Number);
@@ -131,7 +134,7 @@ export default function Today() {
             {P.complete ? (
               <Txt v="meta" align="center" color={p.gold}>تمّ، تقبّل الله</Txt>
             ) : (
-              <Txt v="meta" align="center">{`${ar(pages(P.readW))} من ${ar(pages(P.total))} صفحة`}</Txt>
+              <Txt v="meta" align="center">{pages(P.readW) > 0 ? `بقي ${PG(Math.max(1, pages(P.left)))} من ${ar(pages(P.total))}` : PG(pages(P.total))}</Txt>
             )}
           </Ring>
         </Animated.View>
@@ -149,6 +152,39 @@ export default function Today() {
             {P.complete ? <GlassButton label="مراجعة الحزب" tone="gold" onPress={() => read({ seg: '0' })} /> : null}
           </View>
         </Animated.View>
+
+        {/* a row of small facts: the run of days, this week, the khatmas */}
+        <Animated.View entering={FadeInDown.delay(150).duration(600)}>
+          <Panel style={{ marginTop: 22 }} padding={8}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Stat value={ar(run)} label={run === 1 ? 'يوم متتالٍ' : 'أيام متتالية'} tone={run > 0 ? 'gold' : undefined} />
+              <View style={{ width: 1, height: 34, backgroundColor: p.rule }} />
+              <Stat value={`${ar(weekDone)} / ٧`} label="أحزاب هذا الأسبوع" tone={weekDone > 0 ? 'now' : undefined} />
+              <View style={{ width: 1, height: 34, backgroundColor: p.rule }} />
+              <Stat value={ar(state.khatma.count)} label="ختمات مكتملة" />
+            </View>
+          </Panel>
+        </Animated.View>
+
+        {missed.length ? (
+          <Animated.View entering={FadeInDown.delay(170).duration(600)}>
+            <Panel style={{ marginTop: 14 }}>
+              <Txt v="h2" style={{ marginTop: 10 }}>ما فاتك هذا الأسبوع</Txt>
+              <Txt v="label" style={{ marginBottom: 4 }}>اقرأه متى تيسّر لتكتمل الختمة.</Txt>
+              {missed.map((x, i) => (
+                <Pressable key={x.key} onPress={() => { tap(); setViewDay(x.key); }} accessibilityRole="button" accessibilityLabel={`افتح الحزب ${ORDINALS[x.d]}، ${DAY_NAMES[x.date.getDay()]}`}
+                  style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, opacity: pressed ? 0.6 : 1, borderTopWidth: 1, borderTopColor: p.rule })}>
+                  <View style={{ flex: 1 }}>
+                    <Txt v="body" style={{ fontFamily: F.uiMed }}>{`الحزب ${ORDINALS[x.d]}: ${x.part.name}`}</Txt>
+                    <Txt v="label">{`${DAY_NAMES[x.date.getDay()]}، ${x.n ? `قرأت ${ar(x.n)} من ٥ جلسات` : 'لم يبدأ'}`}</Txt>
+                  </View>
+                  <Text maxFontSizeMultiplier={1.2} style={{ fontFamily: F.uiBold, fontSize: 13.5, color: p.turqHi }}>اقرأه</Text>
+                  <ChevronIcon size={16} color={p.faint} />
+                </Pressable>
+              ))}
+            </Panel>
+          </Animated.View>
+        ) : null}
 
         <Animated.View entering={FadeInDown.delay(180).duration(600)} style={{ marginTop: 30 }}>
           <PrayerPath orbs={orbs} width={W} onPress={openSitting} />
