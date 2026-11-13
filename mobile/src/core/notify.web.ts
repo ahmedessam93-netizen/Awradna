@@ -17,7 +17,11 @@ export const isStandalone = () => typeof window !== 'undefined' && (window.match
 export const needsHomeScreen = () => isIOS() && !isStandalone();
 
 export function configureNotifications() {
-  if (typeof navigator !== 'undefined' && hasServer() && 'serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+  // Netlify: the worker with notifications. Elsewhere (GitHub Pages): the offline worker that
+  // saves the whole app and book next to the page.
+  if (hasServer()) navigator.serviceWorker.register('/sw.js').catch(() => {});
+  else navigator.serviceWorker.register(`${process.env.EXPO_BASE_URL || ''}/sw.js`).catch(() => {});
 }
 
 function keyBytes(b64: string) {
